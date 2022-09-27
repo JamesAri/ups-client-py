@@ -18,15 +18,15 @@ def init_grid():
 def draw_grid(win, grid):
     for i, row in enumerate(grid):
         for j, pixel in enumerate(row):
-            pygame.draw.rect(win, pixel, (j * PIXEL_SIZE + PADDING,
-                                          i * PIXEL_SIZE + PADDING,
-                                          PIXEL_SIZE,
-                                          PIXEL_SIZE))
+            pg.draw.rect(win, pixel, (j * PIXEL_SIZE + PADDING,
+                                      i * PIXEL_SIZE + PADDING,
+                                      PIXEL_SIZE,
+                                      PIXEL_SIZE))
     if DRAW_GRID_LINES:
         for i in range(ROWS + 1):
-            pygame.draw.line(win, GRAY, (0, i * PIXEL_SIZE), (WIDTH - TOOLBAR_SIZE, i * PIXEL_SIZE))
+            pg.draw.line(win, GRAY, (0, i * PIXEL_SIZE), (WIDTH - TOOLBAR_SIZE, i * PIXEL_SIZE))
         for i in range(COLS + 1):
-            pygame.draw.line(win, GRAY, (i * PIXEL_SIZE, 0), (i * PIXEL_SIZE, HEIGHT))
+            pg.draw.line(win, GRAY, (i * PIXEL_SIZE, 0), (i * PIXEL_SIZE, HEIGHT))
 
 
 def draw_bg_img(win):
@@ -67,6 +67,43 @@ def erase_row_col_area(grid, row, col):
 def draw_bg(win):
     win.fill(BG_COLOR)
     draw_bg_img(win)
+
+
+def draw_chat_layout(win, text_surface, active):
+    pg.draw.rect(win, BG_CHAT, CHAT_RECT, border_radius=5)
+    pg.draw.rect(win, BLACK, CHAT_RECT, width=1, border_radius=5)
+
+    border_padding = 2
+    pg.draw.rect(win, WHITE, INPUT_REC)
+    pg.draw.rect(win, YELLOW if active else BLACK,
+                 (
+                     INPUT_REC.x - border_padding,
+                     INPUT_REC.y - border_padding,
+                     INPUT_REC.w + 2 * border_padding,
+                     INPUT_REC.h + 2 * border_padding,
+                 ),
+                 width=2, border_radius=2)
+
+
+def do_input_tick(win, text_surface):
+    pg.draw.line(win, BLACK,
+                 (
+                     CHAT_RECT.x + TEXT_PADDING + text_surface.get_width() + 1,
+                     CHAT_RECT.y + CHAT_RECT.height - text_surface.get_height() - TEXT_PADDING + 3,
+                 ),
+                 (
+                     CHAT_RECT.x + TEXT_PADDING + text_surface.get_width() + 1,
+                     CHAT_RECT.y + CHAT_RECT.height - text_surface.get_height() - TEXT_PADDING + text_surface.get_height() - 3
+                 ))
+
+
+def draw_chat(win, active, font, chat: Chat, make_input_tick):
+    text_surface = font.render(chat.current_text, True, BLACK)
+    draw_chat_layout(win, text_surface, active)
+    win.blit(text_surface, (CHAT_RECT.x + TEXT_PADDING,
+                            CHAT_RECT.y + CHAT_RECT.height - text_surface.get_height() - TEXT_PADDING))
+    if make_input_tick:
+        do_input_tick(win, text_surface)
 
 
 def draw_canvas(win, grid):
