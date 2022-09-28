@@ -1,30 +1,29 @@
 import math
 
-from actions import *
+from utils import *
+from layout import *
 
 WIN = pg.display.set_mode((WIDTH, HEIGHT))
 
 # init shared
 run = True
-clock = pg.time.Clock()
+timer = Timer()
 font = get_font(DEFAULT_FONT_SIZE)
-elapsed_since_start = 0
-elapsed_since_last_tick_action = 0
-make_tick = False
 
 # init canvas
 grid = init_grid()
 
 # init chat
 active_chat = False
-chat = Chat()
+chat = Chat(BUFFER_SIZE)
+# print(chat.history_buffer_limit)
 text = font.render(chat.current_text, True, GREEN, BLUE)
 textRect = text.get_rect(center=((TOOLBAR_SIZE + WIDTH) // 2, HEIGHT // 2))
 
 if __name__ == '__main__':
     while run:
-        dt = clock.tick(FPS)
-        elapsed_since_start += dt
+        dt = timer.clock.tick(FPS)
+        timer.add(dt)
 
         for event in pg.event.get():
             # LISTEN FOR EXIT
@@ -43,8 +42,7 @@ if __name__ == '__main__':
                 if event.key == pg.K_BACKSPACE:
                     chat.use_backspace()
                 if event.key == pg.K_RETURN:
-                    # TODO implement history if time
-                    pass
+                    chat.add_current_to_history()
                 else:
                     if len(chat.current_text) >= MAX_CHAR:
                         continue
@@ -71,25 +69,9 @@ if __name__ == '__main__':
         # Primary draw functions
         draw_bg(WIN)
         draw_canvas(WIN, grid)
-
-        elapsed_since_last_tick_action += dt
-        if elapsed_since_last_tick_action > INPUT_TICK_RATE:
-            elapsed_since_last_tick_action = 0
-            make_tick = not make_tick
-
-        draw_chat(WIN, active_chat, font, chat, make_tick and active_chat)
-
-        pg.draw.rect(WIN, BG_TIMER, TIMER_RECT, border_radius=5)
-        pg.draw.rect(WIN, YELLOW, TIMER_RECT, width=2, border_radius=5)
-        pg.draw.rect(WIN, YELLOW,
-                     (
-                         TIMER_RECT.x,
-                         TIMER_RECT.y,
-                         TIMER_RECT.w - math.floor(TIMER_RECT.w * (elapsed_since_start / TIMER_DUR)),
-                         TIMER_RECT.h,
-                     ),
-                     border_radius=5)
-
+        draw_chat(WIN, active_chat, font, chat, timer.make_tick and active_chat)
+        draw_timer(WIN, timer.elapsed_since_start)
+        
         # Redraw
         pg.display.flip()
     pg.quit()
