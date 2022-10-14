@@ -22,9 +22,25 @@ def draw_grid(win, grid):
                                       PIXEL_SIZE))
     if DRAW_GRID_LINES:
         for i in range(ROWS + 1):
-            pg.draw.line(win, GRAY, (0, i * PIXEL_SIZE), (WIDTH - TOOLBAR_SIZE, i * PIXEL_SIZE))
+            pg.draw.line(win, GRAY,
+                         (
+                             PADDING,
+                             i * PIXEL_SIZE + PADDING,
+                         ),
+                         (
+                             WIDTH - TOOLBAR_SIZE - PADDING,
+                             i * PIXEL_SIZE + PADDING,
+                         ))
         for i in range(COLS + 1):
-            pg.draw.line(win, GRAY, (i * PIXEL_SIZE, 0), (i * PIXEL_SIZE, HEIGHT))
+            pg.draw.line(win, GRAY,
+                         (
+                             i * PIXEL_SIZE + PADDING,
+                             PADDING,
+                         ),
+                         (
+                             i * PIXEL_SIZE + PADDING,
+                             HEIGHT - PADDING,
+                         ))
 
 
 def erase_row_col_area(grid, row, col):

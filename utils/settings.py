@@ -56,14 +56,15 @@ def get_font(size):
     )
 
 
-FONT_HEIGHT = get_font(DEFAULT_FONT_SIZE).get_height()
+FONT = get_font(DEFAULT_FONT_SIZE)
+FONT_HEIGHT = FONT.get_height()
 HISTORY_CHAT_INPUT_PADDING = FONT_HEIGHT * .5
 
 TOOLBAR_SIZE = abs(WIDTH - HEIGHT)
 
 PIXEL_SIZE = (min(WIDTH, HEIGHT) - 2 * PADDING) // COLS
 
-DRAW_GRID_LINES = False
+DRAW_GRID_LINES = True
 
 BG_IMG = pg.image.load("./resources/images/texture.png")
 BG_IMG_X_REPEAT = WIDTH // BG_IMG.get_width()
