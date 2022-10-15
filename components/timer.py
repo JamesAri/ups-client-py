@@ -1,6 +1,6 @@
 import math
 
-from utils import *
+from settings import *
 
 
 def draw_timer(win, elapsed):

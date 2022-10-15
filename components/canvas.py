@@ -1,25 +1,15 @@
-from utils import *
+from settings import *
+from model import Canvas
 
 
-def init_grid():
-    grid = []
-
-    for i in range(ROWS):
-        grid.append([])
-        for _ in range(COLS):
-            grid[i].append(BG_CANVAS)
-    return grid
-
-
-###########################################
-
-def draw_grid(win, grid):
-    for i, row in enumerate(grid):
-        for j, pixel in enumerate(row):
-            pg.draw.rect(win, pixel, (j * PIXEL_SIZE + PADDING,
-                                      i * PIXEL_SIZE + PADDING,
-                                      PIXEL_SIZE,
-                                      PIXEL_SIZE))
+def draw_grid(win, canvas: Canvas):
+    with canvas.canvas_lock:
+        for i, row in enumerate(canvas.grid):
+            for j, pixel in enumerate(row):
+                pg.draw.rect(win, pixel, (j * PIXEL_SIZE + PADDING,
+                                          i * PIXEL_SIZE + PADDING,
+                                          PIXEL_SIZE,
+                                          PIXEL_SIZE))
     if DRAW_GRID_LINES:
         for i in range(ROWS + 1):
             pg.draw.line(win, GRAY,
@@ -43,19 +33,6 @@ def draw_grid(win, grid):
                          ))
 
 
-def erase_row_col_area(grid, row, col):
-    grid[col][row] = BG_CANVAS
-    for i in range(1, 4):
-        grid[col - i][row - i] = BG_CANVAS
-        grid[col - i][row + i] = BG_CANVAS
-        grid[col + i][row - i] = BG_CANVAS
-        grid[col + i][row + i] = BG_CANVAS
-        grid[col - i][row] = BG_CANVAS
-        grid[col][row - i] = BG_CANVAS
-        grid[col + i][row] = BG_CANVAS
-        grid[col][row + i] = BG_CANVAS
-
-
 def get_row_col_pos(pos):
     x, y = pos
 
@@ -72,5 +49,5 @@ def get_row_col_pos(pos):
     return row, col
 
 
-def draw_canvas(win, grid):
-    draw_grid(win, grid)
+def draw_canvas(win, canvas):
+    draw_grid(win, canvas)

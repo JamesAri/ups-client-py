@@ -29,19 +29,23 @@ PADDING = 50
 
 # CANVAS
 ROWS = COLS = 100
+CANVAS_SIZE = ROWS * COLS
 
 # CHAT
 INPUT_TICK_RATE = 500  # in ms
 CHAT_INPUT_BG_PADDING = 10
 CHAT_INPUT_TEXT_PADDING = 2
-MAX_CHAR = 28
+MAX_MSG_LEN = 28
 DEFAULT_FONT_SIZE = 16
 CHAT_ALPHA = 128
-BUFFER_SIZE = 25
+HIST_BUFFER_SIZE = 25
 
 # TIMER
 TIMER_HEIGHT = 15
 TIMER_DUR = 60000  # in ms
+
+# SOCKETS
+TIMEOUT_SEC = 2
 
 
 ###############################################################
@@ -56,6 +60,7 @@ def get_font(size):
     )
 
 
+WIN = pg.display.set_mode((WIDTH, HEIGHT))
 FONT = get_font(DEFAULT_FONT_SIZE)
 FONT_HEIGHT = FONT.get_height()
 HISTORY_CHAT_INPUT_PADDING = FONT_HEIGHT * .5

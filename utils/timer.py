@@ -1,5 +1,5 @@
 import pygame as pg
-from utils import INPUT_TICK_RATE
+from settings import INPUT_TICK_RATE
 
 
 class Timer:

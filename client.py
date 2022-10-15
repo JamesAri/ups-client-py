@@ -1,98 +1,129 @@
 import socket
 import threading
 import time as tm
+from model import Chat, Canvas
 
-nickname = input("Choose a nickname: ")
-try:
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect(('127.0.0.1', 9034))
-    my_bytes = bytearray([6])
-    print(my_bytes)
-    my_bytes += len(nickname).to_bytes(4, "big")
-    print(my_bytes)
-    my_bytes += bytearray(nickname, "ascii")
-    print(my_bytes)
-    server.send(my_bytes)
-except:
-    print("FAILURE!")
-    exit(1)
+from settings import CANVAS_SIZE, TIMEOUT_SEC
 
 
-def receive():
-    while True:
+class Client:
+    username: str
+    server: socket
+    run: threading.Event
+    chat: Chat
+    canvas: Canvas
+
+    def __init__(self, username: str):
+        self.username = username
+        self.run = threading.Event()
+        self.run.set()
+
+        self.chat = Chat()
+        self.canvas = Canvas()
+
+    def login(self):
         try:
-            header = int.from_bytes(server.recv(1), "big")
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.connect(('127.0.0.1', 9034))
+            self.server.settimeout(TIMEOUT_SEC)
 
-            match header:
-                case 1:
-                    print("GAME_IN_PROGRESS")
-                    game_end = int.from_bytes(server.recv(8), "big")
-                    game_end -= int(tm.time())
-                    print("game ends in: " + str(game_end) + " seconds")
-                case 2:
-                    print("CANVAS")
-                case 3:
-                    print("CHAT")
-                    msg_size = int.from_bytes(server.recv(4), "big")
-                    message = server.recv(msg_size).decode('ascii')
-                    print(message)
-                case 4:
-                    print("START_AND_GUESS")
-                    game_end = int.from_bytes(server.recv(8), "big")
-                    game_end -= int(tm.time())
-                    print("game ends in: " + str(game_end) + " seconds")
-                case 5:
-                    print("START_AND_DRAW")
-
-                    msg_size = int.from_bytes(server.recv(4), "big")
-                    message = server.recv(msg_size).decode('ascii')
-                    print(message)
-
-                    game_end = int.from_bytes(server.recv(8), "big")
-                    game_end -= int(tm.time())
-                    print("game ends in: " + str(game_end) + " seconds")
-                case 6:
-                    print("INPUT_USERNAME")
-                case 7:
-                    print("CORRECT_GUESS")
-                case 8:
-                    print("WRONG_GUESS")
-                case 9:
-                    print("CORRECT_GUESS_ANNOUNCEMENT")
-                    msg_size = int.from_bytes(server.recv(4), "big")
-                    message = server.recv(msg_size).decode('ascii')
-                    print(message)
-                case 10:
-                    print("INVALID_USERNAME")
-                case 11:
-                    print("WAITING_FOR_PLAYERS")
-                    now_players = int.from_bytes(server.recv(4), "big")
-                    need_players = int.from_bytes(server.recv(4), "big")
-                    print("waiting for players: (" + str(now_players) + "/" + str(need_players) + ")")
-                case 12:
-                    print("GAME_ENDS")
-                case 13:
-                    print("SERVER_ERROR")
-                case _:
-                    print("[ERROR]: unknown header")
-                    exit(1)
+            my_bytes = bytearray([6])
+            my_bytes += len(self.username).to_bytes(4, "big")
+            my_bytes += bytearray(self.username, "ascii")
+            self.server.send(my_bytes)
         except:
-            print("An error occurred!")
-            server.close()
-            break
+            print("LOGIN FAILURE!")
+            exit(1)
 
+    def receive(self):
+        while self.run.is_set():
+            try:
+                header = int.from_bytes(self.server.recv(1), "big")
 
-def send():
-    while True:
-        message = input("")
-        my_bfr = bytearray([3])
-        my_bfr += len(message).to_bytes(4, "big")
-        my_bfr += bytearray(message, "ascii")
-        server.send(my_bfr)
+                match header:
+                    case 1:
+                        self.chat.add_to_history("GAME_IN_PROGRESS")
 
+                        game_end = int.from_bytes(self.server.recv(8), "big")
+                        game_end -= int(tm.time())
 
-receive_thread = threading.Thread(target=receive)
-receive_thread.start()
+                        self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+                    case 2:
+                        self.chat.add_to_history("CANVAS")
+                        canvas = self.server.recv(CANVAS_SIZE)
+                        self.canvas.unpack_and_set(bytearray(canvas))
+                    case 3:
+                        self.chat.add_to_history("CHAT")
 
-send_thread = threading.Thread(target=send)
-send_thread.start()
+                        msg_size = int.from_bytes(self.server.recv(4), "big")
+                        message = self.server.recv(msg_size).decode('ascii')
+                        self.chat.add_to_history(message)
+                    case 4:
+                        self.chat.add_to_history("START_AND_GUESS")
+
+                        game_end = int.from_bytes(self.server.recv(8), "big")
+                        game_end -= int(tm.time())
+                        self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+                    case 5:
+                        self.chat.add_to_history("START_AND_DRAW")
+
+                        msg_size = int.from_bytes(self.server.recv(4), "big")
+                        message = self.server.recv(msg_size).decode('ascii')
+                        self.chat.add_to_history(message)
+
+                        game_end = int.from_bytes(self.server.recv(8), "big")
+                        game_end -= int(tm.time())
+                        self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+                    case 6:
+                        self.chat.add_to_history("INPUT_USERNAME")
+                    case 7:
+                        self.chat.add_to_history("CORRECT_GUESS")
+                    case 8:
+                        self.chat.add_to_history("WRONG_GUESS")
+                    case 9:
+                        self.chat.add_to_history("CORRECT_GUESS_ANNOUNCEMENT")
+
+                        msg_size = int.from_bytes(self.server.recv(4), "big")
+                        message = self.server.recv(msg_size).decode('ascii')
+
+                        self.chat.add_to_history(message)
+                    case 10:
+                        self.chat.add_to_history("INVALID_USERNAME")
+                    case 11:
+                        self.chat.add_to_history("WAITING_FOR_PLAYERS")
+
+                        now_players = int.from_bytes(self.server.recv(4), "big")
+                        need_players = int.from_bytes(self.server.recv(4), "big")
+
+                        self.chat.add_to_history(
+                            "waiting for players: (" + str(now_players) + "/" + str(need_players) + ")")
+                    case 12:
+                        self.chat.add_to_history("GAME_ENDS")
+                    case 13:
+                        self.chat.add_to_history("SERVER_ERROR")
+                    case _:
+                        print("[ERROR]: unknown header")
+                        exit(1)
+            except socket.timeout:
+                continue
+            except:
+                print("An error occurred!")
+                self.server.close()
+                break
+
+    def send_guess(self, guess):
+        try:
+            my_bfr = bytearray([3])
+            my_bfr += len(guess).to_bytes(4, "big")
+            my_bfr += bytearray(guess, "ascii")
+            self.server.send(my_bfr)
+        except:
+            exit(1)
+
+    def send_canvas(self):
+        try:
+            my_bfr = bytearray([2])
+            my_bfr += self.canvas.grid_serialized
+            self.server.send(my_bfr)
+        except:
+            exit(1)

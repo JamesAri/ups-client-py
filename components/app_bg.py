@@ -1,4 +1,4 @@
-from utils import *
+from settings import *
 
 
 def draw_bg_img(win):

@@ -1,4 +1,5 @@
-from utils import *
+from settings import *
+from model import Chat
 
 
 def draw_input_bg(win, active):
