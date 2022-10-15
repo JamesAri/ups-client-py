@@ -19,10 +19,6 @@ if __name__ == "__main__":
     receive_thread = threading.Thread(target=client.receive)
     receive_thread.start()
 
-    # send_thread = threading.Thread(target=client.send)
-    # send_thread.start()
-
     start_game(client)
 
     receive_thread.join()
-    # send_thread.join()

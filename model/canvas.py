@@ -1,17 +1,19 @@
 import threading
+from bitarray import bitarray
 
-from settings import ROWS, COLS, BG_CANVAS
+from settings import ROWS, COLS, BG_CANVAS, CANVAS_SIZE, BLACK, CANVAS_SIZE_SERIALIZED
 
 
 class Canvas:
     grid: list
-    grid_serialized: bytearray
+    grid_serialized: bitarray
     canvas_lock: threading.Lock
 
     def __init__(self):
         self.__init_grid()
         self.canvas_lock = threading.Lock()
-        self.grid_serialized = bytearray(ROWS * COLS)
+        self.grid_serialized = bitarray(CANVAS_SIZE)
+        self.grid_serialized.setall(0)
 
     def __init_grid(self):
         self.grid = []
@@ -21,18 +23,19 @@ class Canvas:
                 self.grid[i].append(BG_CANVAS)
         return self.grid
 
-    def unpack_and_set(self, byte_arr: bytearray):
-        if len(byte_arr) != len(self.grid):
+    def unpack_and_set(self, serialized_grid: bytes):
+        if len(serialized_grid) != CANVAS_SIZE_SERIALIZED:
             raise Exception("Received invalid canvas array")
         with self.canvas_lock:
-            for i in ROWS:
-                for j in COLS:
-                    self.grid_serialized = byte_arr
-                    self.grid[i][j] = byte_arr[i * COLS + j]
+            for i in range(ROWS):
+                for j in range(COLS):
+                    self.grid_serialized.clear()
+                    self.grid_serialized.frombytes(serialized_grid)
+                    self.grid[i][j] = BLACK if self.grid_serialized[j * COLS + i] else BG_CANVAS
 
     def set_pixel(self, row, col, value: int):
         with self.canvas_lock:
-            self.grid[row][col] = value  # rgb value
+            self.grid[col][row] = value  # rgb value
             self.grid_serialized[row * COLS + col] = 1 if value else 0
 
     def erase_row_col_area(self, row, col):

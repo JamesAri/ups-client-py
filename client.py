@@ -2,8 +2,9 @@ import socket
 import threading
 import time as tm
 from model import Chat, Canvas
+import bitarray
 
-from settings import CANVAS_SIZE, TIMEOUT_SEC
+from settings import CANVAS_SIZE_SERIALIZED, TIMEOUT_SEC
 
 
 class Client:
@@ -49,9 +50,8 @@ class Client:
 
                         self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
                     case 2:
-                        self.chat.add_to_history("CANVAS")
-                        canvas = self.server.recv(CANVAS_SIZE)
-                        self.canvas.unpack_and_set(bytearray(canvas))
+                        canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
+                        self.canvas.unpack_and_set(canvas_serialized)
                     case 3:
                         self.chat.add_to_history("CHAT")
 
@@ -102,12 +102,13 @@ class Client:
                     case 13:
                         self.chat.add_to_history("SERVER_ERROR")
                     case _:
-                        print("[ERROR]: unknown header")
+                        print("[ERROR]: unknown header: ", header)
                         exit(1)
             except socket.timeout:
                 continue
-            except:
+            except Exception as e:
                 print("An error occurred!")
+                print(e)
                 self.server.close()
                 break
 
@@ -117,13 +118,15 @@ class Client:
             my_bfr += len(guess).to_bytes(4, "big")
             my_bfr += bytearray(guess, "ascii")
             self.server.send(my_bfr)
-        except:
+        except Exception as e:
+            print(e)
             exit(1)
 
     def send_canvas(self):
         try:
             my_bfr = bytearray([2])
-            my_bfr += self.canvas.grid_serialized
+            my_bfr += self.canvas.grid_serialized.tobytes()
             self.server.send(my_bfr)
-        except:
+        except Exception as e:
+            print(e)
             exit(1)

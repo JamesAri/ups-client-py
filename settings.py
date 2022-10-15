@@ -29,7 +29,6 @@ PADDING = 50
 
 # CANVAS
 ROWS = COLS = 100
-CANVAS_SIZE = ROWS * COLS
 
 # CHAT
 INPUT_TICK_RATE = 500  # in ms
@@ -59,6 +58,9 @@ def get_font(size):
         size,
     )
 
+
+CANVAS_SIZE = ROWS * COLS
+CANVAS_SIZE_SERIALIZED = int(CANVAS_SIZE / 8 + CANVAS_SIZE % 8)
 
 WIN = pg.display.set_mode((WIDTH, HEIGHT))
 FONT = get_font(DEFAULT_FONT_SIZE)
