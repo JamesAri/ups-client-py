@@ -6,7 +6,7 @@ from client import Client
 
 def get_client() -> Client:
     if len(sys.argv) != 2:
-        exit(1)
+        raise Exception("invalid arguments")
     else:
         return Client(sys.argv[1])
 
@@ -22,3 +22,6 @@ if __name__ == "__main__":
     start_game(client)
 
     receive_thread.join()
+
+# TODO: server - buffer - 1 per instance
+# TODO: client - send deltas, not whole canvas

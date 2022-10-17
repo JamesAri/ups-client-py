@@ -2,7 +2,6 @@ import socket
 import threading
 import time as tm
 from model import Chat, Canvas
-import bitarray
 
 from settings import CANVAS_SIZE_SERIALIZED, TIMEOUT_SEC
 
@@ -11,21 +10,33 @@ class Client:
     username: str
     server: socket
     run: threading.Event
+    is_drawing: threading.Event
+    game_in_progress: threading.Event
+    correct_guess: threading.Event
+    can_guess: threading.Event
     chat: Chat
     canvas: Canvas
 
     def __init__(self, username: str):
         self.username = username
-        self.run = threading.Event()
-        self.run.set()
 
         self.chat = Chat()
         self.canvas = Canvas()
 
+        self.is_drawing = threading.Event()
+        self.game_in_progress = threading.Event()
+        self.correct_guess = threading.Event()
+        self.can_guess = threading.Event()
+        self.run = threading.Event()
+
+        self.run.set()
+
     def login(self):
+        if self.username == "!dev-game-only":
+            return
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.connect(('127.0.0.1', 9034))
+            self.server.connect(('147.228.133.43', 9034))
             self.server.settimeout(TIMEOUT_SEC)
 
             my_bytes = bytearray([6])
@@ -37,6 +48,8 @@ class Client:
             exit(1)
 
     def receive(self):
+        if self.username == "!dev-game-only":
+            return
         while self.run.is_set():
             try:
                 header = int.from_bytes(self.server.recv(1), "big")
@@ -44,12 +57,16 @@ class Client:
                 match header:
                     case 1:
                         self.chat.add_to_history("GAME_IN_PROGRESS")
+                        if not self.game_in_progress.is_set():
+                            raise Exception("Internal error, game should be running")
 
                         game_end = int.from_bytes(self.server.recv(8), "big")
                         game_end -= int(tm.time())
 
                         self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
                     case 2:
+                        if self.is_drawing:
+                            raise Exception("Received unknown data")
                         canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
                         self.canvas.unpack_and_set(canvas_serialized)
                     case 3:
@@ -64,6 +81,9 @@ class Client:
                         game_end = int.from_bytes(self.server.recv(8), "big")
                         game_end -= int(tm.time())
                         self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+
+                        self.is_drawing.clear()
+                        self.game_in_progress.set()
                     case 5:
                         self.chat.add_to_history("START_AND_DRAW")
 
@@ -74,10 +94,14 @@ class Client:
                         game_end = int.from_bytes(self.server.recv(8), "big")
                         game_end -= int(tm.time())
                         self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+
+                        self.is_drawing.set()
+                        self.game_in_progress.set()
                     case 6:
                         self.chat.add_to_history("INPUT_USERNAME")
                     case 7:
                         self.chat.add_to_history("CORRECT_GUESS")
+                        self.correct_guess.set()
                     case 8:
                         self.chat.add_to_history("WRONG_GUESS")
                     case 9:
@@ -99,8 +123,10 @@ class Client:
                             "waiting for players: (" + str(now_players) + "/" + str(need_players) + ")")
                     case 12:
                         self.chat.add_to_history("GAME_ENDS")
+                        self.game_in_progress.clear()
+                        self.correct_guess.clear()
                     case 13:
-                        self.chat.add_to_history("SERVER_ERROR")
+                        self.chat.add_to_history("SERVER_ERROR")  # todo: handle this...
                     case _:
                         print("[ERROR]: unknown header: ", header)
                         exit(1)
@@ -113,6 +139,8 @@ class Client:
                 break
 
     def send_guess(self, guess):
+        if self.username == "!dev-game-only":
+            return
         try:
             my_bfr = bytearray([3])
             my_bfr += len(guess).to_bytes(4, "big")
@@ -123,6 +151,8 @@ class Client:
             exit(1)
 
     def send_canvas(self):
+        if self.username == "!dev-game-only":
+            return
         try:
             my_bfr = bytearray([2])
             my_bfr += self.canvas.grid_serialized.tobytes()

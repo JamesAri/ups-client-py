@@ -1,4 +1,3 @@
-import threading
 from settings import *
 from client import Client
 
@@ -40,7 +39,7 @@ def start_game(client: Client):
                     all_chat.add_current_to_history()
                     client.send_guess(temp_msg)
                 else:
-                    if len(all_chat.current_text) >= MAX_MSG_LEN:
+                    if len(all_chat.current_text) > MAX_MSG_LEN:
                         continue
                     char = event.unicode
                     if char.isalpha() or char == ' ':
