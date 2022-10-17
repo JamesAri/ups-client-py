@@ -2,31 +2,36 @@ import socket
 import threading
 import time as tm
 from model import Chat, Canvas
+from utils import Timer
 
 from settings import CANVAS_SIZE_SERIALIZED, TIMEOUT_SEC
 
 
 class Client:
-    username: str
     server: socket
+
+    username: str
+    chat: Chat
+    canvas: Canvas
+    timer: Timer
+
     run: threading.Event
     is_drawing: threading.Event
     game_in_progress: threading.Event
     correct_guess: threading.Event
-    can_guess: threading.Event
-    chat: Chat
-    canvas: Canvas
+    can_play: threading.Event
 
     def __init__(self, username: str):
         self.username = username
 
         self.chat = Chat()
         self.canvas = Canvas()
+        self.timer = Timer()
 
         self.is_drawing = threading.Event()
         self.game_in_progress = threading.Event()
         self.correct_guess = threading.Event()
-        self.can_guess = threading.Event()
+        self.can_play = threading.Event()
         self.run = threading.Event()
 
         self.run.set()
@@ -36,14 +41,15 @@ class Client:
             return
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.connect(('147.228.133.43', 9034))
+            self.server.connect(('127.0.0.1', 9034))
             self.server.settimeout(TIMEOUT_SEC)
 
             my_bytes = bytearray([6])
             my_bytes += len(self.username).to_bytes(4, "big")
             my_bytes += bytearray(self.username, "ascii")
             self.server.send(my_bytes)
-        except:
+        except Exception as ex:
+            print(ex)
             print("LOGIN FAILURE!")
             exit(1)
 
@@ -65,7 +71,7 @@ class Client:
 
                         self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
                     case 2:
-                        if self.is_drawing:
+                        if self.is_drawing.is_set():
                             raise Exception("Received unknown data")
                         canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
                         self.canvas.unpack_and_set(canvas_serialized)
@@ -78,10 +84,9 @@ class Client:
                     case 4:
                         self.chat.add_to_history("START_AND_GUESS")
 
-                        game_end = int.from_bytes(self.server.recv(8), "big")
-                        game_end -= int(tm.time())
-                        self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+                        round_end = int.from_bytes(self.server.recv(8), "big")
 
+                        self.timer.set_round_end(round_end)
                         self.is_drawing.clear()
                         self.game_in_progress.set()
                     case 5:
@@ -89,12 +94,11 @@ class Client:
 
                         msg_size = int.from_bytes(self.server.recv(4), "big")
                         message = self.server.recv(msg_size).decode('ascii')
+                        round_end = int.from_bytes(self.server.recv(8), "big")
+
                         self.chat.add_to_history(message)
 
-                        game_end = int.from_bytes(self.server.recv(8), "big")
-                        game_end -= int(tm.time())
-                        self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
-
+                        self.timer.set_round_end(round_end)
                         self.is_drawing.set()
                         self.game_in_progress.set()
                     case 6:
@@ -125,6 +129,7 @@ class Client:
                         self.chat.add_to_history("GAME_ENDS")
                         self.game_in_progress.clear()
                         self.correct_guess.clear()
+                        self.timer.set_round_end(0)
                     case 13:
                         self.chat.add_to_history("SERVER_ERROR")  # todo: handle this...
                     case _:

@@ -1,3 +1,14 @@
+# SHARED DEFINITIONS:
+# Future application can use settings (json-xml like) file or describe
+# some these definitions in a protocol.
+
+# define PORT "9034"
+# define GAME_DURATION_SEC 60
+# define MAX_USERNAME_LEN 20
+# define ROWS 100
+# define COLS 100
+# define CANVAS_BUF_SIZE ((ROWS * COLS) / 8 + (ROWS * COLS) % 8)
+
 import pygame as pg
 
 pg.init()
@@ -28,6 +39,7 @@ WIDTH, HEIGHT = 1100, 600
 PADDING = 50
 
 # CANVAS
+DRAW_GRID_LINES = True
 ROWS = COLS = 100
 
 # CHAT
@@ -41,10 +53,11 @@ HIST_BUFFER_SIZE = 25
 
 # TIMER
 TIMER_HEIGHT = 15
-TIMER_DUR = 60000  # in ms
+ROUND_DUR_MS = 60000  # in ms
+ROUND_DUR_SEC = ROUND_DUR_MS / 1000
 
 # SOCKETS
-TIMEOUT_SEC = 2
+TIMEOUT_SEC = 1
 
 
 ###############################################################
@@ -70,8 +83,6 @@ HISTORY_CHAT_INPUT_PADDING = FONT_HEIGHT * .5
 TOOLBAR_SIZE = abs(WIDTH - HEIGHT)
 
 PIXEL_SIZE = (min(WIDTH, HEIGHT) - 2 * PADDING) // COLS
-
-DRAW_GRID_LINES = True
 
 BG_IMG = pg.image.load("./resources/images/texture.png")
 BG_IMG_X_REPEAT = WIDTH // BG_IMG.get_width()

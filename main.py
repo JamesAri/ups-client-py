@@ -13,17 +13,14 @@ def get_client() -> Client:
 
 if __name__ == "__main__":
     client: Client = get_client()
-    print(1)
-    client.login()
-    print(2)
-    receive_thread = threading.Thread(target=client.receive)
-    print(3)
-    receive_thread.start()
-    print(4)
-    start_game(client)
-    print(5)
-    receive_thread.join()
-    print(6)
 
+    client.login()
+
+    receive_thread = threading.Thread(target=client.receive)
+    receive_thread.start()
+
+    start_game(client)
+
+    receive_thread.join()
 # TODO: server - buffer - 1 per instance
 # TODO: client - send deltas, not whole canvas

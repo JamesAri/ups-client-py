@@ -9,14 +9,12 @@ def start_game(client: Client):
     run = client.run
     all_chat = client.chat
     canvas = client.canvas
-
-    game_timer = Timer()
+    game_timer = client.timer
 
     active_chat = False
 
     while run.is_set():
-        dt = game_timer.clock.tick(FPS)
-        game_timer.add(dt)
+        game_timer.update()
 
         for event in pg.event.get():
             # LISTEN FOR EXIT
@@ -66,7 +64,7 @@ def start_game(client: Client):
         draw_bg(WIN)
         draw_canvas(WIN, canvas)
         draw_chat(WIN, active_chat, FONT, all_chat, game_timer.make_tick and active_chat)
-        draw_timer(WIN, game_timer.elapsed_since_start)
+        draw_timer(WIN, client)
 
         # Redraw
         pg.display.flip()
