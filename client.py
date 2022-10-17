@@ -36,7 +36,7 @@ class Client:
             return
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.connect(('147.228.133.43', 9034))
+            self.server.connect(('147.228.133.43', 53165))
             self.server.settimeout(TIMEOUT_SEC)
 
             my_bytes = bytearray([6])
