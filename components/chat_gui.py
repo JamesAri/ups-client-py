@@ -23,7 +23,7 @@ def make_input(win, font, chat, make_input_tick):
 
 
 def draw_chat_history(win, font, chat: Chat):
-    texts = [font.render(text, True, GRAY) for text in chat.history]
+    texts = [font.render(text, True, color) for (text, color) in chat.history]
     for i, text in enumerate(texts, 1):
         win.blit(text, (INPUT_REC.x, INPUT_REC.y - i * FONT_HEIGHT - HISTORY_CHAT_INPUT_PADDING))
 

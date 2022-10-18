@@ -5,7 +5,7 @@ from settings import ROWS, COLS, BG_CANVAS, CANVAS_SIZE, BLACK, CANVAS_SIZE_SERI
 
 
 class Canvas:
-    grid: list
+    grid: list = []
     grid_serialized: bitarray
     canvas_lock: threading.Lock
 
@@ -16,12 +16,12 @@ class Canvas:
         self.grid_serialized.setall(0)
 
     def __init_grid(self):
-        self.grid = []
-        for i in range(ROWS):
-            self.grid.append([])
-            for _ in range(COLS):
-                self.grid[i].append(BG_CANVAS)
-        return self.grid
+        self.grid = [[BG_CANVAS for _ in range(COLS)] for _ in range(ROWS)]
+
+    def clear(self):
+        with self.canvas_lock:
+            self.grid_serialized.setall(0)
+            self.__init_grid()
 
     def unpack_and_set(self, serialized_grid: bytes):
         if len(serialized_grid) != CANVAS_SIZE_SERIALIZED:

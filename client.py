@@ -4,7 +4,7 @@ import time as tm
 from model import Chat, Canvas
 from utils import Timer
 
-from settings import CANVAS_SIZE_SERIALIZED, TIMEOUT_SEC
+from settings import *
 
 
 class Client:
@@ -62,27 +62,27 @@ class Client:
 
                 match header:
                     case 1:
-                        self.chat.add_to_history("GAME_IN_PROGRESS")
+                        self.chat.add_to_history(("GAME_IN_PROGRESS", SERVER_MESSAGE_COLOR))
                         if not self.game_in_progress.is_set():
                             raise Exception("Internal error, game should be running")
 
                         game_end = int.from_bytes(self.server.recv(8), "big")
                         game_end -= int(tm.time())
-
-                        self.chat.add_to_history("game ends in: " + str(game_end) + " seconds")
+                        msg = "game ends in: " + str(game_end) + " seconds"
+                        self.chat.add_to_history((msg, SERVER_MESSAGE_COLOR))
                     case 2:
                         if self.is_drawing.is_set():
                             raise Exception("Received unknown data")
                         canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
                         self.canvas.unpack_and_set(canvas_serialized)
                     case 3:
-                        self.chat.add_to_history("CHAT")
+                        self.chat.add_to_history(("CHAT", SERVER_MESSAGE_COLOR))
 
                         msg_size = int.from_bytes(self.server.recv(4), "big")
                         message = self.server.recv(msg_size).decode('ascii')
-                        self.chat.add_to_history(message)
+                        self.chat.add_to_history((message, GRAY))
                     case 4:
-                        self.chat.add_to_history("START_AND_GUESS")
+                        self.chat.add_to_history(("START_AND_GUESS", SERVER_MESSAGE_COLOR))
 
                         round_end = int.from_bytes(self.server.recv(8), "big")
 
@@ -90,48 +90,48 @@ class Client:
                         self.is_drawing.clear()
                         self.game_in_progress.set()
                     case 5:
-                        self.chat.add_to_history("START_AND_DRAW")
+                        self.chat.add_to_history(("START_AND_DRAW", SERVER_MESSAGE_COLOR))
 
                         msg_size = int.from_bytes(self.server.recv(4), "big")
                         message = self.server.recv(msg_size).decode('ascii')
                         round_end = int.from_bytes(self.server.recv(8), "big")
 
-                        self.chat.add_to_history(message)
+                        self.chat.add_to_history((message, SERVER_MESSAGE_COLOR))
 
                         self.timer.set_round_end(round_end)
                         self.is_drawing.set()
                         self.game_in_progress.set()
                     case 6:
-                        self.chat.add_to_history("INPUT_USERNAME")
+                        raise Exception("Invalid socket header")
                     case 7:
-                        self.chat.add_to_history("CORRECT_GUESS")
+                        self.chat.add_to_history(("CORRECT_GUESS", CORRECT_ANSWER_COLOR))
                         self.correct_guess.set()
                     case 8:
-                        self.chat.add_to_history("WRONG_GUESS")
+                        self.chat.add_to_history(("WRONG_GUESS", SERVER_MESSAGE_COLOR))
                     case 9:
-                        self.chat.add_to_history("CORRECT_GUESS_ANNOUNCEMENT")
+                        self.chat.add_to_history(("CORRECT_GUESS_ANNOUNCEMENT", SERVER_MESSAGE_COLOR))
 
                         msg_size = int.from_bytes(self.server.recv(4), "big")
                         message = self.server.recv(msg_size).decode('ascii')
 
-                        self.chat.add_to_history(message)
+                        self.chat.add_to_history((message, SERVER_MESSAGE_COLOR))
                     case 10:
-                        self.chat.add_to_history("INVALID_USERNAME")
+                        self.chat.add_to_history(("INVALID_USERNAME", SERVER_MESSAGE_COLOR))
                     case 11:
-                        self.chat.add_to_history("WAITING_FOR_PLAYERS")
+                        self.chat.add_to_history(("WAITING_FOR_PLAYERS", SERVER_MESSAGE_COLOR))
 
                         now_players = int.from_bytes(self.server.recv(4), "big")
                         need_players = int.from_bytes(self.server.recv(4), "big")
-
-                        self.chat.add_to_history(
-                            "waiting for players: (" + str(now_players) + "/" + str(need_players) + ")")
+                        msg = "waiting for players: (" + str(now_players) + "/" + str(need_players) + ")"
+                        self.chat.add_to_history((msg, SERVER_MESSAGE_COLOR))
                     case 12:
-                        self.chat.add_to_history("GAME_ENDS")
+                        self.chat.add_to_history(("GAME_ENDS", SERVER_MESSAGE_COLOR))
                         self.game_in_progress.clear()
                         self.correct_guess.clear()
                         self.timer.set_round_end(0)
+                        self.canvas.clear()
                     case 13:
-                        self.chat.add_to_history("SERVER_ERROR")  # todo: handle this...
+                        self.chat.add_to_history(("SERVER_ERROR", SERVER_MESSAGE_COLOR))  # todo: handle this...
                     case _:
                         print("[ERROR]: unknown header: ", header)
                         exit(1)

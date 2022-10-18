@@ -57,6 +57,7 @@ def start_game(client: Client):
                     pos = pg.mouse.get_pos()
                     row, col = get_row_col_pos(pos)
                     canvas.erase_row_col_area(row, col)
+                    client.send_canvas()
                 except IndexError:
                     pass
 
