@@ -5,14 +5,24 @@ from client import Client
 
 
 def get_delta(client: Client):
+    """ returns completion of round timer in percentage """
     time_now = int(time.time())  # unix time
     round_start = client.timer.get_round_start()
     round_end = client.timer.get_round_end()
 
     start_timer: bool = client.game_in_progress.is_set() and round_end and round_start and round_start <= time_now
 
-    if not start_timer:
+    if not start_timer or client.timer.chat_timer_counter >= 0:
         client.can_play.clear()
+        if client.timer.chat_timer_counter >= 0:
+            print_msg = (round_start - time_now) != client.timer.chat_timer_counter
+            if print_msg:
+                if client.timer.chat_timer_counter:
+                    msg = f"round starts in {int(client.timer.chat_timer_counter)}s"
+                    client.chat.add_to_history((msg, RED))
+                else:
+                    client.chat.add_to_history(("start", RED))
+                client.timer.chat_timer_counter -= 1
         return 0
     if time_now >= round_end:
         client.can_play.clear()
@@ -21,7 +31,6 @@ def get_delta(client: Client):
     if not client.can_play.is_set():
         client.can_play.set()
 
-    # potential_delta = (ROUND_DUR_SEC - round_end - time_now) / ROUND_DUR_SEC
     return client.timer.elapsed_round_ms / ROUND_DUR_MS
 
 

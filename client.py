@@ -44,10 +44,10 @@ class Client:
             self.server.connect(('127.0.0.1', 9034))
             self.server.settimeout(TIMEOUT_SEC)
 
-            my_bytes = bytearray([6])
-            my_bytes += len(self.username).to_bytes(4, "big")
-            my_bytes += bytearray(self.username, "ascii")
-            self.server.send(my_bytes)
+            login_bfr = bytearray([6])
+            login_bfr += len(self.username).to_bytes(4, "big")
+            login_bfr += bytearray(self.username, "ascii")
+            self.server.send(login_bfr)
         except Exception as ex:
             print(ex)
             print("LOGIN FAILURE!")
@@ -63,18 +63,25 @@ class Client:
                 match header:
                     case 1:
                         self.chat.add_to_history(("GAME_IN_PROGRESS", SERVER_MESSAGE_COLOR))
-                        if not self.game_in_progress.is_set():
-                            raise Exception("Internal error, game should be running")
-
+                        drawing_flag = int.from_bytes(self.server.recv(8), "big")
                         game_end = int.from_bytes(self.server.recv(8), "big")
-                        game_end -= int(tm.time())
-                        msg = "game ends in: " + str(game_end) + " seconds"
-                        self.chat.add_to_history((msg, SERVER_MESSAGE_COLOR))
+                        canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
+
+                        if drawing_flag == 5:
+                            self.is_drawing.set()
+                        self.timer.set_round_end(game_end)
+                        self.canvas.unpack_and_set(canvas_serialized)
+                        self.game_in_progress.set()
+                        self.can_play.set()
                     case 2:
                         if self.is_drawing.is_set():
                             raise Exception("Received unknown data")
-                        canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
-                        self.canvas.unpack_and_set(canvas_serialized)
+                        diffs_count = int.from_bytes(self.server.recv(4), "big")
+                        diffs = []
+                        for _ in range(diffs_count):
+                            diffs.append(int.from_bytes(self.server.recv(4), "big"))
+                        while diffs:
+                            self.canvas.set_pixel_by_index(diffs.pop())
                     case 3:
                         self.chat.add_to_history(("CHAT", SERVER_MESSAGE_COLOR))
 
@@ -143,8 +150,14 @@ class Client:
                 self.server.close()
                 break
 
-    def send_guess(self, guess):
+    def send_guess(self, guess: str):
         if self.username == "!dev-game-only":
+            return
+        if not self.can_play.is_set():
+            return
+        if self.is_drawing.is_set():
+            return
+        if not guess or guess.isspace():
             return
         try:
             my_bfr = bytearray([3])
@@ -155,12 +168,20 @@ class Client:
             print(e)
             exit(1)
 
-    def send_canvas(self):
+    def send_canvas_diff(self, queue: list):
+        # queue -> (col, row)
         if self.username == "!dev-game-only":
+            return
+        if not self.can_play.is_set():
+            return
+        if not self.is_drawing.is_set():
             return
         try:
             my_bfr = bytearray([2])
-            my_bfr += self.canvas.grid_serialized.tobytes()
+            my_bfr += len(queue).to_bytes(4, "big")
+            while queue:
+                cords = queue.pop()
+                my_bfr += (cords[0] * ROWS + cords[1]).to_bytes(4, "big")
             self.server.send(my_bfr)
         except Exception as e:
             print(e)

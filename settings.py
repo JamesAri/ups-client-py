@@ -8,6 +8,7 @@
 # define ROWS 100
 # define COLS 100
 # define CANVAS_BUF_SIZE ((ROWS * COLS) / 8 + (ROWS * COLS) % 8)
+# define MAX_MSG_LEN 27
 
 import pygame as pg
 
@@ -62,6 +63,7 @@ ROUND_DUR_SEC = ROUND_DUR_MS / 1000
 
 # SOCKETS
 TIMEOUT_SEC = 1
+MAX_USERNAME_LEN = 20
 
 
 ###############################################################
@@ -77,7 +79,7 @@ def get_font(size):
 
 
 CANVAS_SIZE = ROWS * COLS
-CANVAS_SIZE_SERIALIZED = int(CANVAS_SIZE / 8 + CANVAS_SIZE % 8)
+CANVAS_SIZE_SERIALIZED = int(CANVAS_SIZE / 8 + (1 if CANVAS_SIZE % 8 else 0))
 
 WIN = pg.display.set_mode((WIDTH, HEIGHT))
 FONT = get_font(DEFAULT_FONT_SIZE)

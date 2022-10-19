@@ -1,5 +1,6 @@
 from settings import *
 from model import Chat
+from client import Client
 
 
 def draw_input_bg(win, active):
@@ -54,6 +55,6 @@ def do_input_tick(win, text_surface):
                  ))
 
 
-def draw_chat(win, active, font, chat: Chat, make_input_tick):
-    draw_chat_layout(win, active, font, chat)
-    make_input(win, font, chat, make_input_tick)
+def draw_chat(win, client: Client, active_chat, font):
+    draw_chat_layout(win, active_chat, font, client.chat)
+    make_input(win, font, client.chat, make_input_tick=client.timer.make_tick and active_chat)

@@ -18,6 +18,9 @@ class Timer:
     round_end_unix: int = 0  # 0 if not set
     round_end_lock: threading.Lock
 
+    # chat
+    chat_timer_counter: int = -1
+
     def __init__(self):
         self.clock = pg.time.Clock()
         self.round_end_lock = threading.Lock()
@@ -39,6 +42,7 @@ class Timer:
             start = self.round_end_unix - ROUND_DUR_SEC
             self.set_round_start(start if start > 0 else 0)
             self.elapsed_round_ms = 0
+            self.chat_timer_counter = start - int(time.time())
 
     def update(self):
         dt = self.clock.tick(FPS)
