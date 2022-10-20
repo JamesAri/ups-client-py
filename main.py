@@ -27,4 +27,3 @@ if __name__ == "__main__":
     start_game(client)
 
     receive_thread.join()
-# TODO: server - buffer - 1 per instance

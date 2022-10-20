@@ -21,7 +21,8 @@ class Canvas:
 
     def unpack_and_set(self, serialized_grid: bytes):
         if len(serialized_grid) != CANVAS_SIZE_SERIALIZED:
-            raise Exception("Received invalid canvas array")
+            raise Exception(
+                f"Received invalid canvas array. Should be {CANVAS_SIZE_SERIALIZED} but was {len(serialized_grid)}")
         bitarray_grid = bitarray()
         bitarray_grid.frombytes(serialized_grid)
         with self.canvas_lock:

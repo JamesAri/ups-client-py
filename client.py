@@ -61,11 +61,20 @@ class Client:
                 header = int.from_bytes(self.server.recv(1), "big")
 
                 match header:
+                    case 0:
+                        print("Server hung up")
+                        exit(1)
                     case 1:
                         self.chat.add_to_history(("GAME_IN_PROGRESS", SERVER_MESSAGE_COLOR))
-                        drawing_flag = int.from_bytes(self.server.recv(8), "big")
+                        drawing_flag = int.from_bytes(self.server.recv(1), "big")
+
+                        if drawing_flag == 5:
+                            guess_word_len = int.from_bytes(self.server.recv(4), "big")
+                            guess_word = self.server.recv(guess_word_len).decode('ascii')
+                            self.chat.add_to_history((guess_word, SERVER_MESSAGE_COLOR))
+
                         game_end = int.from_bytes(self.server.recv(8), "big")
-                        canvas_serialized = self.server.recv(CANVAS_SIZE_SERIALIZED)
+                        canvas_serialized = self.recv_all(self.server, CANVAS_SIZE_SERIALIZED)
 
                         if drawing_flag == 5:
                             self.is_drawing.set()
@@ -135,7 +144,7 @@ class Client:
                         self.chat.add_to_history(("GAME_ENDS", SERVER_MESSAGE_COLOR))
                         self.game_in_progress.clear()
                         self.correct_guess.clear()
-                        self.timer.set_round_end(0)
+                        self.timer.clear_round()
                         self.canvas.clear()
                     case 13:
                         self.chat.add_to_history(("SERVER_ERROR", SERVER_MESSAGE_COLOR))  # todo: handle this...
@@ -149,6 +158,16 @@ class Client:
                 print(e)
                 self.server.close()
                 break
+
+    @staticmethod
+    def recv_all(sock, n):
+        data = bytearray()
+        while len(data) < n:
+            packet = sock.recv(n - len(data))
+            if not packet:
+                raise Exception("recv_all err")
+            data.extend(packet)
+        return data
 
     def send_guess(self, guess: str):
         if self.username == "!dev-game-only":

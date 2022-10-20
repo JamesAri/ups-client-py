@@ -42,7 +42,7 @@ def draw_timer(win, client):
                  (
                      TIMER_RECT.x,
                      TIMER_RECT.y,
-                     TIMER_RECT.w - math.floor(TIMER_RECT.w * delta),
+                     TIMER_RECT.w - math.floor(TIMER_RECT.w * (delta if delta < 1 else 1)),
                      TIMER_RECT.h,
                  ),
                  border_radius=5)
