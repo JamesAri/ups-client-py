@@ -28,7 +28,7 @@ class Canvas:
         with self.canvas_lock:
             for i in range(ROWS):
                 for j in range(COLS):
-                    self.grid[i][j] = BLACK if bitarray_grid[j * COLS + i] else BG_CANVAS
+                    self.grid[j][i] = BLACK if bitarray_grid[j * COLS + i] else BG_CANVAS
 
     def set_pixel(self, col, row, value: int):
         with self.canvas_lock:

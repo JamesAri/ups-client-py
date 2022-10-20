@@ -1,10 +1,9 @@
 import sys
 import threading
-import time
 
+from settings import MAX_USERNAME_LEN
 from game import start_game
 from client import Client
-from settings import MAX_USERNAME_LEN
 
 
 def get_client() -> Client:

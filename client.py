@@ -1,10 +1,13 @@
 import socket
 import threading
-import time as tm
+
+from settings import *
 from model import Chat, Canvas
 from utils import Timer
 
-from settings import *
+HEADER_SIZE = 1
+INT_SIZE = 4
+TIME_SIZE = 8
 
 
 class Client:
@@ -19,7 +22,6 @@ class Client:
     is_drawing: threading.Event
     game_in_progress: threading.Event
     correct_guess: threading.Event
-    can_play: threading.Event
 
     def __init__(self, username: str):
         self.username = username
@@ -31,26 +33,53 @@ class Client:
         self.is_drawing = threading.Event()
         self.game_in_progress = threading.Event()
         self.correct_guess = threading.Event()
-        self.can_play = threading.Event()
         self.run = threading.Event()
 
         self.run.set()
+
+    def recv_all(self, size) -> bytearray:
+        data = bytearray()
+        while len(data) < size:
+            packet = self.server.recv(size - len(data))
+            if not packet:
+                raise Exception("recv_all err")
+            data.extend(packet)
+        return data
+
+    def recv_bytes(self, size: int) -> bytearray:
+        return self.recv_all(size)
+
+    def recv_header(self) -> int:
+        return int.from_bytes(self.recv_all(HEADER_SIZE), "big")
+
+    def recv_int(self) -> int:
+        return int.from_bytes(self.recv_all(INT_SIZE), "big")
+
+    def recv_time(self) -> int:
+        return int.from_bytes(self.recv_all(TIME_SIZE), "big")
+
+    def recv_msg(self, forward: bool = False) -> str:
+        msg_len = self.recv_int()
+        msg = self.recv_all(msg_len).decode('ascii')
+        if forward:
+            self.chat.add_to_history((msg, SERVER_MESSAGE_COLOR))
+        return msg
 
     def login(self):
         if self.username == "!dev-game-only":
             return
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.connect(('127.0.0.1', 9034))
+            self.server.connect(('127.0.0.1', PORT))
             self.server.settimeout(TIMEOUT_SEC)
 
-            login_bfr = bytearray([6])
+            login_bfr = bytearray([SocketHeader.INPUT_USERNAME])
             login_bfr += len(self.username).to_bytes(4, "big")
             login_bfr += bytearray(self.username, "ascii")
             self.server.send(login_bfr)
         except Exception as ex:
             print(ex)
-            print("LOGIN FAILURE!")
+            print("LOGIN FAILURE!\nChange your username.")
             exit(1)
 
     def receive(self):
@@ -58,99 +87,102 @@ class Client:
             return
         while self.run.is_set():
             try:
-                header = int.from_bytes(self.server.recv(1), "big")
+                header = self.recv_header()
 
                 match header:
-                    case 0:
+                    case SocketHeader.EMPTY:
                         print("Server hung up")
-                        exit(1)
-                    case 1:
-                        self.chat.add_to_history(("GAME_IN_PROGRESS", SERVER_MESSAGE_COLOR))
-                        drawing_flag = int.from_bytes(self.server.recv(1), "big")
+                        break
 
-                        if drawing_flag == 5:
-                            guess_word_len = int.from_bytes(self.server.recv(4), "big")
-                            guess_word = self.server.recv(guess_word_len).decode('ascii')
-                            self.chat.add_to_history((guess_word, SERVER_MESSAGE_COLOR))
+                    case SocketHeader.GAME_IN_PROGRESS:
+                        self.chat.add_to_history(("Joined game in progress", SERVER_MESSAGE_COLOR))
 
-                        game_end = int.from_bytes(self.server.recv(8), "big")
-                        canvas_serialized = self.recv_all(self.server, CANVAS_SIZE_SERIALIZED)
-
-                        if drawing_flag == 5:
+                        if self.recv_header() == SocketHeader.START_AND_DRAW:
+                            self.chat.add_to_history((f"Draw: {self.recv_msg()}", ORANGE))
                             self.is_drawing.set()
+                        else:
+                            self.chat.add_to_history((f"Guess the object!", ORANGE))
+
+                        game_end = self.recv_time()
+                        canvas_serialized = self.recv_bytes(CANVAS_SIZE_SERIALIZED)
+
                         self.timer.set_round_end(game_end)
                         self.canvas.unpack_and_set(canvas_serialized)
                         self.game_in_progress.set()
-                        self.can_play.set()
-                    case 2:
+
+                    case SocketHeader.CANVAS:
                         if self.is_drawing.is_set():
                             raise Exception("Received unknown data")
-                        diffs_count = int.from_bytes(self.server.recv(4), "big")
+
+                        diffs_count = self.recv_int()
                         diffs = []
+
                         for _ in range(diffs_count):
-                            diffs.append(int.from_bytes(self.server.recv(4), "big"))
+                            diffs.append(self.recv_int())
+
                         while diffs:
                             self.canvas.set_pixel_by_index(diffs.pop())
-                    case 3:
-                        self.chat.add_to_history(("CHAT", SERVER_MESSAGE_COLOR))
 
-                        msg_size = int.from_bytes(self.server.recv(4), "big")
-                        message = self.server.recv(msg_size).decode('ascii')
-                        self.chat.add_to_history((message, GRAY))
-                    case 4:
-                        self.chat.add_to_history(("START_AND_GUESS", SERVER_MESSAGE_COLOR))
+                    case SocketHeader.CHAT:
+                        msg = self.recv_msg()
+                        self.chat.add_to_history((msg, GRAY))
 
-                        round_end = int.from_bytes(self.server.recv(8), "big")
+                    case SocketHeader.START_AND_GUESS:
+                        self.chat.add_to_history((f"Guess the drawing!", ORANGE))
+
+                        round_end = self.recv_time()
 
                         self.timer.set_round_end(round_end)
                         self.is_drawing.clear()
                         self.game_in_progress.set()
-                    case 5:
-                        self.chat.add_to_history(("START_AND_DRAW", SERVER_MESSAGE_COLOR))
 
-                        msg_size = int.from_bytes(self.server.recv(4), "big")
-                        message = self.server.recv(msg_size).decode('ascii')
-                        round_end = int.from_bytes(self.server.recv(8), "big")
+                    case SocketHeader.START_AND_DRAW:
+                        self.chat.add_to_history((f"Draw: {self.recv_msg()}", ORANGE))
 
-                        self.chat.add_to_history((message, SERVER_MESSAGE_COLOR))
+                        round_end = self.recv_time()
 
                         self.timer.set_round_end(round_end)
                         self.is_drawing.set()
                         self.game_in_progress.set()
-                    case 6:
+
+                    case SocketHeader.INPUT_USERNAME:
                         raise Exception("Invalid socket header")
-                    case 7:
-                        self.chat.add_to_history(("CORRECT_GUESS", CORRECT_ANSWER_COLOR))
+
+                    case SocketHeader.CORRECT_GUESS:
+                        self.chat.add_to_history(("That's correct!", CORRECT_ANSWER_COLOR))
                         self.correct_guess.set()
-                    case 8:
-                        self.chat.add_to_history(("WRONG_GUESS", SERVER_MESSAGE_COLOR))
-                    case 9:
-                        self.chat.add_to_history(("CORRECT_GUESS_ANNOUNCEMENT", SERVER_MESSAGE_COLOR))
+                        self.timer.can_play.clear()
 
-                        msg_size = int.from_bytes(self.server.recv(4), "big")
-                        message = self.server.recv(msg_size).decode('ascii')
+                    case SocketHeader.WRONG_GUESS:
+                        self.chat.add_to_history(("Wrong guess", SERVER_MESSAGE_COLOR))
 
-                        self.chat.add_to_history((message, SERVER_MESSAGE_COLOR))
-                    case 10:
-                        self.chat.add_to_history(("INVALID_USERNAME", SERVER_MESSAGE_COLOR))
-                    case 11:
-                        self.chat.add_to_history(("WAITING_FOR_PLAYERS", SERVER_MESSAGE_COLOR))
+                    case SocketHeader.CORRECT_GUESS_ANNOUNCEMENT:
+                        self.recv_msg(forward=True)
 
-                        now_players = int.from_bytes(self.server.recv(4), "big")
-                        need_players = int.from_bytes(self.server.recv(4), "big")
-                        msg = "waiting for players: (" + str(now_players) + "/" + str(need_players) + ")"
+                    case SocketHeader.INVALID_USERNAME:
+                        self.chat.add_to_history(("Invalid username!", SERVER_MESSAGE_COLOR))
+
+                    case SocketHeader.WAITING_FOR_PLAYERS:
+                        now_players = self.recv_int()
+                        need_players = self.recv_int()
+
+                        msg = f"Waiting for players to join ({now_players}/{need_players})"
                         self.chat.add_to_history((msg, SERVER_MESSAGE_COLOR))
-                    case 12:
-                        self.chat.add_to_history(("GAME_ENDS", SERVER_MESSAGE_COLOR))
+
+                    case SocketHeader.GAME_ENDS:
+                        self.chat.clear_history()
                         self.game_in_progress.clear()
                         self.correct_guess.clear()
                         self.timer.clear_round()
                         self.canvas.clear()
-                    case 13:
-                        self.chat.add_to_history(("SERVER_ERROR", SERVER_MESSAGE_COLOR))  # todo: handle this...
+
+                    case SocketHeader.SERVER_ERROR:
+                        self.chat.add_to_history(("SERVER_ERROR", SERVER_MESSAGE_COLOR))
+                        break
+
                     case _:
-                        print("[ERROR]: unknown header: ", header)
-                        exit(1)
+                        print("[ERROR]: Unknown header: ", header)
+                        break
             except socket.timeout:
                 continue
             except Exception as e:
@@ -159,49 +191,38 @@ class Client:
                 self.server.close()
                 break
 
-    @staticmethod
-    def recv_all(sock, n):
-        data = bytearray()
-        while len(data) < n:
-            packet = sock.recv(n - len(data))
-            if not packet:
-                raise Exception("recv_all err")
-            data.extend(packet)
-        return data
-
     def send_guess(self, guess: str):
         if self.username == "!dev-game-only":
             return
-        if not self.can_play.is_set():
+        if not self.timer.can_play.is_set():
             return
         if self.is_drawing.is_set():
             return
         if not guess or guess.isspace():
             return
         try:
-            my_bfr = bytearray([3])
-            my_bfr += len(guess).to_bytes(4, "big")
+            my_bfr = bytearray([SocketHeader.CHAT])
+            my_bfr += len(guess).to_bytes(INT_SIZE, "big")
             my_bfr += bytearray(guess, "ascii")
             self.server.send(my_bfr)
         except Exception as e:
             print(e)
-            exit(1)
 
     def send_canvas_diff(self, queue: list):
-        # queue -> (col, row)
         if self.username == "!dev-game-only":
             return
-        if not self.can_play.is_set():
+        if not self.timer.can_play.is_set():
             return
         if not self.is_drawing.is_set():
             return
         try:
-            my_bfr = bytearray([2])
-            my_bfr += len(queue).to_bytes(4, "big")
+
+            my_bfr = bytearray([SocketHeader.CANVAS])
+            my_bfr += len(queue).to_bytes(INT_SIZE, "big")
             while queue:
-                cords = queue.pop()
-                my_bfr += (cords[0] * ROWS + cords[1]).to_bytes(4, "big")
+                col, row = queue.pop()
+                index = col * ROWS + row
+                my_bfr += index.to_bytes(INT_SIZE, "big")
             self.server.send(my_bfr)
         except Exception as e:
             print(e)
-            exit(1)

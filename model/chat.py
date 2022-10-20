@@ -25,7 +25,7 @@ class Chat:
         if text.isspace() or not text:
             return
         if len(text) > MAX_MSG_LEN:
-            return
+            pass  # todo
         with self.chat_lock:
             if len(self.history) >= HIST_BUFFER_SIZE:
                 self.history.pop()

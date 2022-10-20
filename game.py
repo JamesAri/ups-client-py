@@ -1,7 +1,6 @@
 from settings import *
 from client import Client
 
-from utils import *
 from components import *
 
 
@@ -23,17 +22,19 @@ def start_game(client: Client):
             if event.type == pg.QUIT:
                 run.clear()
 
-            if client.can_play.is_set():
+            if not client.timer.can_play.is_set():
+                active_chat = False
+            else:
                 # CHAT TRIGGER
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if CHAT_RECT.collidepoint(event.pos):
-                        active_chat = not client.is_drawing.is_set()
+                        active_chat = True
                     else:
                         active_chat = False
 
                 if client.is_drawing.is_set():
                     active_chat = False  # chat opened from previous round
-                    
+
                 # CHAT INPUT
                 if active_chat:
                     if event.type == pg.KEYDOWN:
@@ -68,7 +69,7 @@ def start_game(client: Client):
                             pos = pg.mouse.get_pos()
                             row, col = get_row_col_pos(pos)
                             canvas.erase_row_col_area(row, col)
-                            client.send_canvas_diff([])
+                            client.send_canvas_diff([])  # todo
                         except IndexError:
                             pass
 

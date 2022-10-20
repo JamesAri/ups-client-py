@@ -1,37 +1,41 @@
 import math
 import time as time
+
 from settings import *
 from client import Client
 
 
 def get_delta(client: Client):
     """ returns completion of round timer in percentage """
-    time_now = int(time.time())  # unix time
-    round_start = client.timer.get_round_start()
-    round_end = client.timer.get_round_end()
+    time_now: int = int(time.time())
+    round_start: int = client.timer.get_round_start()
+    round_end: int = client.timer.get_round_end()
+    sec_before_start: int = client.timer.sec_before_start_timer
 
-    start_timer: bool = client.game_in_progress.is_set() and round_end and round_start and round_start <= time_now
+    if sec_before_start >= 0 and client.game_in_progress.is_set():
+        print_msg = (round_start - time_now) <= sec_before_start
+        if print_msg:
+            if sec_before_start:
+                msg = f"round starts in {int(sec_before_start)}s"
+                client.chat.add_to_history((msg, RED))
+            else:
+                client.chat.add_to_history(("start", RED))
+            client.timer.decrease_start_timer()
 
-    if not start_timer or client.timer.chat_timer_counter >= 0:
-        client.can_play.clear()
-        if client.timer.chat_timer_counter >= 0:
-            print_msg = (round_start - time_now) != client.timer.chat_timer_counter
-            if print_msg:
-                if client.timer.chat_timer_counter:
-                    msg = f"round starts in {int(client.timer.chat_timer_counter)}s"
-                    client.chat.add_to_history((msg, RED))
-                else:
-                    client.chat.add_to_history(("start", RED))
-                client.timer.chat_timer_counter -= 1
+    start_timer: bool = \
+        client.game_in_progress.is_set() and round_start <= time_now
+
+    if not start_timer:
+        # client.can_play.clear()
         return 0
     if time_now >= round_end:
-        client.can_play.clear()
+        # client.can_play.clear()
         return 1
 
-    if not client.can_play.is_set():
-        client.can_play.set()
+    # if not client.can_play.is_set():
+    #     client.can_play.set()
 
-    return client.timer.elapsed_round_ms / ROUND_DUR_MS
+    return int((time.time() - round_start) * 1000) / ROUND_DUR_MS
 
 
 def draw_timer(win, client):

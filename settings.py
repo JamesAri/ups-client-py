@@ -1,15 +1,4 @@
-# SHARED DEFINITIONS:
-# Future application can use settings (json-xml like) file or describe
-# some these definitions in a protocol.
-
-# define PORT "9034"
-# define GAME_DURATION_SEC 60
-# define MAX_USERNAME_LEN 20
-# define ROWS 100
-# define COLS 100
-# define CANVAS_BUF_SIZE ((ROWS * COLS) / 8 + (ROWS * COLS) % 8)
-# define MAX_MSG_LEN 27
-
+from definitions import *
 import pygame as pg
 
 pg.init()
@@ -29,6 +18,7 @@ RED = (255, 87, 51)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (239, 193, 83)
+ORANGE = (255, 127, 80)
 BG_COLOR = (36, 100, 242)
 BG_CHAT = (80, 80, 80)
 BG_TIMER = (17, 48, 106)
@@ -45,7 +35,6 @@ PADDING = 50
 
 # CANVAS
 DRAW_GRID_LINES = True
-ROWS = COLS = 100
 
 # CHAT
 INPUT_TICK_RATE = 500  # in ms
@@ -58,12 +47,11 @@ HIST_BUFFER_SIZE = 25
 
 # TIMER
 TIMER_HEIGHT = 15
-ROUND_DUR_MS = 60000  # in ms
-ROUND_DUR_SEC = ROUND_DUR_MS / 1000
+
+ROUND_DUR_MS = ROUND_DUR_SEC * 1000  # in ms
 
 # SOCKETS
 TIMEOUT_SEC = 1
-MAX_USERNAME_LEN = 20
 
 
 ###############################################################
