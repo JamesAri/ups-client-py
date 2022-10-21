@@ -50,7 +50,7 @@ class Client:
         return self.recv_all(size)
 
     def recv_header(self) -> int:
-        return int.from_bytes(self.recv_all(HEADER_SIZE), "big")
+        return int.from_bytes(self.server.recv(HEADER_SIZE), "big")
 
     def recv_int(self) -> int:
         return int.from_bytes(self.recv_all(INT_SIZE), "big")
@@ -74,7 +74,7 @@ class Client:
             self.server.settimeout(TIMEOUT_SEC)
 
             login_bfr = bytearray([SocketHeader.INPUT_USERNAME])
-            login_bfr += len(self.username).to_bytes(4, "big")
+            login_bfr += len(self.username).to_bytes(INT_SIZE, "big")
             login_bfr += bytearray(self.username, "ascii")
             self.server.send(login_bfr)
         except Exception as ex:
