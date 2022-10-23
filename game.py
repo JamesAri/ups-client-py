@@ -1,7 +1,6 @@
 from settings import *
-from client import Client
-
 from components import *
+from client import Client
 
 
 def start_game(client: Client):
@@ -68,8 +67,8 @@ def start_game(client: Client):
                         try:
                             pos = pg.mouse.get_pos()
                             row, col = get_row_col_pos(pos)
-                            canvas.erase_row_col_area(row, col)
-                            client.send_canvas_diff([])  # todo
+                            diffs = canvas.erase_row_col_area(col, row)
+                            client.send_canvas_diff(diffs)
                         except IndexError:
                             pass
 

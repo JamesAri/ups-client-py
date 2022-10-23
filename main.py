@@ -1,18 +1,22 @@
+from settings import PORT
+from game import start_game
+from client import Client
+from utils import get_valid_username, validate_username
+
 import sys
 import threading
 
-from settings import MAX_USERNAME_LEN
-from game import start_game
-from client import Client
+EXPECTED_ARGUMENT = 2  # <script_path> | username
 
 
 def get_client() -> Client:
-    if len(sys.argv) != 2:
+    if len(sys.argv) != EXPECTED_ARGUMENT:
         raise Exception("invalid arguments")
     else:
-        if len(sys.argv[1]) > MAX_USERNAME_LEN:
-            raise Exception(f"Username can have max. {MAX_USERNAME_LEN} characters")
-        return Client(sys.argv[1])
+        username = sys.argv[1]
+        if not validate_username(username):
+            username = get_valid_username()
+        return Client(username, '127.0.0.1', PORT)
 
 
 if __name__ == "__main__":

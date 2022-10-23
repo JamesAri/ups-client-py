@@ -1,6 +1,6 @@
 from settings import *
 from model import Chat
-from client import Client
+from client.client import Client
 
 
 def draw_input_bg(win, active):

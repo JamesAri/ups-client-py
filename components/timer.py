@@ -1,8 +1,8 @@
-import math
-import time as time
-
 from settings import *
 from client import Client
+
+import math
+import time as time
 
 
 def get_delta(client: Client):

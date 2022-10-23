@@ -1,4 +1,5 @@
 from definitions import *
+
 import pygame as pg
 
 pg.init()

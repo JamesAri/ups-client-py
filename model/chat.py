@@ -1,6 +1,6 @@
-import threading
-
 from settings import MAX_MSG_LEN, HIST_BUFFER_SIZE, DEFAULT_TEXT_COLOR
+
+import threading
 
 
 class Chat:
