@@ -52,7 +52,7 @@ class Canvas:
     def erase_row_col_area(self, col, row) -> list:
         diffs = []
         with self.canvas_lock:
-            for i in range(1, 4):
+            for i in range(1, 3):
                 offsets = [(col - i, row - i),
                            (col + i, row + i),
                            (col - i, row + i),

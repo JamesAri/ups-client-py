@@ -1,30 +1,34 @@
 from definitions import *
 
+import os
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
 
 pg.init()
 pg.font.init()
 
-pg.key.set_repeat(500, 30)
-pg.display.set_caption("Draw and Guess!")
+pg.key.set_repeat(500, 30)  # chat input - deleting, edit, etc
 
 ###############################################################
 #                       DEFAULT VALUES                        #
 ###############################################################
-# COLORS
+# COLOR DEFINITIONS
 BLACK = (0, 0, 0)
-GRAY = (140, 140, 140)
+GRAY = (175, 175, 175)
+LIGHT_GRAY = (211, 211, 211)
 WHITE = (255, 255, 255)
 RED = (255, 87, 51)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (239, 193, 83)
 ORANGE = (255, 127, 80)
+
+# GUI COLORS
 BG_COLOR = (36, 100, 242)
 BG_CHAT = (80, 80, 80)
 BG_TIMER = (17, 48, 106)
 BG_CANVAS = WHITE
-
 DEFAULT_TEXT_COLOR = WHITE
 SERVER_MESSAGE_COLOR = RED
 CORRECT_ANSWER_COLOR = GREEN
@@ -40,11 +44,20 @@ DRAW_GRID_LINES = True
 # CHAT
 INPUT_TICK_RATE = 500  # in ms
 CHAT_INPUT_BG_PADDING = 10
-CHAT_INPUT_TEXT_PADDING = 2
+TEXT_PADDING = 2
+CHAT_BORDER_RADIUS = 5
+CHAT_BORDER_WIDTH = 1
 MAX_MSG_LEN = 27
 DEFAULT_FONT_SIZE = 16
 CHAT_ALPHA = 128
 HIST_BUFFER_SIZE = 25
+
+# PLAYER LIST
+STATUS_CIRCLE_RADIUS = 5
+STATUS_CIRCLE_DIAMETER = STATUS_CIRCLE_RADIUS * 2
+
+# BUTTONS
+BUTTON_RADIUS = 3
 
 # TIMER
 TIMER_HEIGHT = 15
@@ -61,7 +74,6 @@ TIMEOUT_SEC = 1
 
 def get_font(size):
     return pg.font.SysFont(
-        # './resources/fonts/JetBrains Mono Regular Nerd Font Complete.ttf',
         'arial',
         size,
     )
@@ -96,7 +108,26 @@ INPUT_REC = pg.Rect(
     CHAT_RECT.x + CHAT_INPUT_BG_PADDING,
     CHAT_RECT.y + CHAT_RECT.h - FONT_HEIGHT - CHAT_INPUT_BG_PADDING,
     CHAT_RECT.w - 2 * CHAT_INPUT_BG_PADDING,
-    FONT_HEIGHT
-)
+    FONT_HEIGHT)
 
 TIMER_RECT = pg.Rect(PADDING, (PADDING - TIMER_HEIGHT) // 2, WIDTH - 2 * PADDING, TIMER_HEIGHT)
+
+__x_padding = 4
+__y_padding = 2
+__btn_size = 25
+PLAYER_LIST_BTN = pg.Rect(CHAT_RECT.x + CHAT_RECT.w + __x_padding,
+                          CHAT_RECT.y + __y_padding,
+                          __btn_size,
+                          __btn_size)
+
+__btn_size *= 0.8
+PLAYER_LIST_IMG_POS = pg.Rect(0, 0, __btn_size, __btn_size)
+PLAYER_LIST_IMG_POS.center = PLAYER_LIST_BTN.center
+PLAYER_LIST_IMG = pg.image.load("./resources/images/player-list.webp")
+PLAYER_LIST_IMG = pg.transform.scale(PLAYER_LIST_IMG, (PLAYER_LIST_IMG_POS.w, PLAYER_LIST_IMG_POS.h))
+
+__player_list_padding = 5
+PLAYER_LIST_RECT = pg.Rect(CHAT_RECT.x + CHAT_RECT.w * .5 - __player_list_padding,
+                           CHAT_RECT.y + __player_list_padding,
+                           CHAT_RECT.w * .5,
+                           0)

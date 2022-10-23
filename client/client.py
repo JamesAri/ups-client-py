@@ -15,6 +15,7 @@ class Client:
     handler: ClientHandler
 
     username: str
+    players: dict[str, bool]
 
     chat: Chat
     canvas: Canvas
@@ -32,6 +33,7 @@ class Client:
         self.handler = ClientHandler(self)
 
         self.username = username
+        self.players = dict([(username, True), ("Pepa", True), ("Honza", False)])
 
         self.chat = Chat()
         self.canvas = Canvas()
@@ -43,6 +45,10 @@ class Client:
         self.correct_guess = threading.Event()
 
         self.run.set()
+
+        if self.username == "!dev-game-only":
+            self.timer.can_play.set()
+            # self.is_drawing.set()  # toggle for drawing debug
 
     def connect_to_server(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,7 +67,7 @@ class Client:
                 self.connect_to_server()
             print("Login successful.")
         except Exception as e:
-            print(e)
+            print(f"Login error: {e}")
             self.username = "!dev-game-only"
             self.handler.handle_server_close()
 

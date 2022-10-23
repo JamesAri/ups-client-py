@@ -63,10 +63,10 @@ class ClientHandler:
 
         if hdr == SocketHeader.INVALID_USERNAME:
             return False
-        elif hdr != SocketHeader.OK:
-            raise Exception("Received unknown header during login")
-        else:
+        elif hdr == SocketHeader.OK:
             return True
+        else:
+            raise Exception("Received unknown header during login")
 
     def handle_send_canvas_diff(self, queue: list):
         my_bfr = bytearray([SocketHeader.CANVAS])

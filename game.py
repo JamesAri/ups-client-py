@@ -4,13 +4,15 @@ from client import Client
 
 
 def start_game(client: Client):
+    pg.display.set_caption(f"Draw and Guess! — logged as:   {client.username}")
+
     run = client.run
     all_chat = client.chat
     canvas = client.canvas
     game_timer = client.timer
 
-    active_chat = False
-
+    active_chat: bool = False
+    player_list_toggle: bool = False
     queue = []
 
     while run.is_set():
@@ -30,6 +32,10 @@ def start_game(client: Client):
                         active_chat = True
                     else:
                         active_chat = False
+
+                    # toggle list
+                    if PLAYER_LIST_BTN.collidepoint(event.pos):
+                        player_list_toggle = not player_list_toggle
 
                 if client.is_drawing.is_set():
                     active_chat = False  # chat opened from previous round
@@ -75,9 +81,10 @@ def start_game(client: Client):
         # Primary draw functions
         draw_bg(WIN)
         draw_canvas(WIN, canvas)
-        draw_chat(WIN, client, active_chat, FONT)
+        draw_chat(WIN, client, active_chat)
         draw_timer(WIN, client)
+        draw_toolbox(WIN, client, player_list_toggle)
 
         # Redraw
-        pg.display.flip()
+        pg.display.flip()  # todo use update() for better performance
     pg.quit()
