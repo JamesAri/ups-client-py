@@ -16,6 +16,7 @@ class Client:
 
     username: str
     players: dict[str, bool]
+    players_lock: threading.Lock
 
     chat: Chat
     canvas: Canvas
@@ -33,7 +34,8 @@ class Client:
         self.handler = ClientHandler(self)
 
         self.username = username
-        self.players = dict([(username, True), ("Pepa", True), ("Honza", False)])
+        self.players = dict()
+        self.players_lock = threading.Lock()
 
         self.chat = Chat()
         self.canvas = Canvas()
@@ -48,7 +50,20 @@ class Client:
 
         if self.username == "!dev-game-only":
             self.timer.can_play.set()
+            self.update_players(self.username, False)
             # self.is_drawing.set()  # toggle for drawing debug
+
+    def update_players(self, key, val):
+        with self.players_lock:
+            self.players[key] = val
+
+    def get_player_from_player_list(self, key):
+        with self.players_lock:
+            return self.players[key]
+
+    def get_num_of_players(self):
+        with self.players_lock:
+            return len(self.players)
 
     def connect_to_server(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -68,7 +83,6 @@ class Client:
             print("Login successful.")
         except Exception as e:
             print(f"Login error: {e}")
-            self.username = "!dev-game-only"
             self.handler.handle_server_close()
 
     def receive(self):
@@ -121,6 +135,12 @@ class Client:
 
                     case SocketHeader.SERVER_ERROR:
                         self.handler.handle_server_error()
+
+                    case SocketHeader.PLAYER_LIST:
+                        self.handler.handle_player_list()
+
+                    case SocketHeader.PLAYER_LIST_CHANGE:
+                        self.handler.handle_player_list_change()
 
                     case _:
                         self.handler.handle_unknown_header()

@@ -47,6 +47,8 @@ class ClientHandler:
     ###############################################################
 
     def handle_server_close(self):
+        self.client.update_players(self.client.username, False)
+        self.client.username = "!dev-game-only"
         self.client.server.close()
         self.client.chat.add_to_history(("An error occurred, you are offline now", SERVER_MESSAGE_COLOR))
         self.client.chat.add_to_history(("Check console for error details", SERVER_MESSAGE_COLOR))
@@ -174,6 +176,17 @@ class ClientHandler:
 
     def handle_server_error(self):
         raise Exception("There is some error on server side")
+
+    def handle_player_list(self):
+        num_of_players = self.recv_int()
+        for _ in range(num_of_players):
+            self.handle_player_list_change()
+
+    def handle_player_list_change(self):
+        username = self.recv_msg()
+        status = int.from_bytes(self.recv_bytes(1), "big")
+        print(f"STATUS: {status}")
+        self.client.update_players(username, bool(status))
 
     def handle_unknown_header(self):
         raise Exception("Received invalid header")

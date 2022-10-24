@@ -23,6 +23,11 @@ def start_game(client: Client):
             if event.type == pg.QUIT:
                 run.clear()
 
+            if event.type == pg.MOUSEBUTTONDOWN:
+                # PLAYER LIST BUTTON
+                if PLAYER_LIST_BTN.collidepoint(event.pos):
+                    player_list_toggle = not player_list_toggle
+
             if not client.timer.can_play.is_set():
                 active_chat = False
             else:
@@ -32,10 +37,6 @@ def start_game(client: Client):
                         active_chat = True
                     else:
                         active_chat = False
-
-                    # toggle list
-                    if PLAYER_LIST_BTN.collidepoint(event.pos):
-                        player_list_toggle = not player_list_toggle
 
                 if client.is_drawing.is_set():
                     active_chat = False  # chat opened from previous round

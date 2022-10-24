@@ -29,3 +29,5 @@ class SocketHeader(IntEnum):
     GAME_ENDS = 12
     GAME_IN_PROGRESS = 13
     SERVER_ERROR = 14
+    PLAYER_LIST = 15
+    PLAYER_LIST_CHANGE = 16
