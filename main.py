@@ -6,11 +6,11 @@ from utils import get_valid_username, validate_username
 import sys
 import threading
 
-EXPECTED_ARGUMENT = 2  # <script_path> | username
+EXPECTED_ARGUMENTS = 2  # <script_path> | username
 
 
 def get_client() -> Client:
-    if len(sys.argv) != EXPECTED_ARGUMENT:
+    if len(sys.argv) != EXPECTED_ARGUMENTS:
         raise Exception("invalid arguments")
     else:
         username = sys.argv[1]

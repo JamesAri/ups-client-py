@@ -1,6 +1,6 @@
 # SHARED DEFINITIONS:
 # Future application can use settings (json-xml like) file or describe
-# some these definitions in a protocol.
+# some of these definitions in a protocol.
 
 from enum import IntEnum
 
