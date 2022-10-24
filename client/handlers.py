@@ -77,7 +77,7 @@ class ClientHandler:
             col, row = queue.pop()
             index = col * ROWS + row
             my_bfr += index.to_bytes(INT_SIZE, "big")
-        self.client.server.send(my_bfr)  # todo: make send_all
+        self.client.server.send(my_bfr)  # TODO make send_all
 
     def handle_send_guess(self, guess: str):
         my_bfr = bytearray([SocketHeader.CHAT])
@@ -185,7 +185,6 @@ class ClientHandler:
     def handle_player_list_change(self):
         username = self.recv_msg()
         status = int.from_bytes(self.recv_bytes(1), "big")
-        print(f"STATUS: {status}")
         self.client.update_players(username, bool(status))
 
     def handle_unknown_header(self):

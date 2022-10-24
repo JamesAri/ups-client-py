@@ -1,4 +1,4 @@
-from settings import MAX_MSG_LEN, HIST_BUFFER_SIZE, DEFAULT_TEXT_COLOR
+from settings import MAX_GUESS_LEN, HIST_BUFFER_SIZE, DEFAULT_TEXT_COLOR
 
 import threading
 
@@ -15,8 +15,8 @@ class Chat:
         self.current_text = self.current_text[:-1]
 
     def add_current_to_history(self):
-        if len(self.current_text) > MAX_MSG_LEN:
-            self.current_text = self.current_text[:MAX_MSG_LEN]
+        if len(self.current_text) > MAX_GUESS_LEN:
+            self.current_text = self.current_text[:MAX_GUESS_LEN]
         self.add_to_history((self.current_text, DEFAULT_TEXT_COLOR))
         self.current_text = ''
 
@@ -24,8 +24,6 @@ class Chat:
         text = message[0]
         if text.isspace() or not text:
             return
-        if len(text) > MAX_MSG_LEN:
-            pass  # todo
         with self.chat_lock:
             if len(self.history) >= HIST_BUFFER_SIZE:
                 self.history.pop()

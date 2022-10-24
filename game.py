@@ -51,7 +51,7 @@ def start_game(client: Client):
                             all_chat.add_current_to_history()
                             client.send_guess(temp_msg)
                         else:
-                            if len(all_chat.current_text) > MAX_MSG_LEN:
+                            if len(all_chat.current_text) >= MAX_GUESS_LEN:
                                 continue
                             char = event.unicode
                             if char.isalpha() or char == ' ':
@@ -87,5 +87,5 @@ def start_game(client: Client):
         draw_toolbox(WIN, client, player_list_toggle)
 
         # Redraw
-        pg.display.flip()  # todo use update() for better performance
+        pg.display.flip()  # TODO use update() for better performance
     pg.quit()

@@ -1,5 +1,9 @@
 from settings import MAX_USERNAME_LEN
 
+import re
+
+regexp = re.compile(r"\W")
+
 
 def get_valid_username() -> str:
     username = input_username_prompt()
@@ -9,7 +13,9 @@ def get_valid_username() -> str:
 
 
 def validate_username(username: str) -> bool:
-    return True  # todo
+    if username == "!dev-game-only":
+        return True
+    return len(username) <= MAX_USERNAME_LEN and not regexp.search(username)
 
 
 def input_username_prompt() -> str:
