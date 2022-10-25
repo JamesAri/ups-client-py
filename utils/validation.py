@@ -19,5 +19,6 @@ def validate_username(username: str) -> bool:
 
 
 def input_username_prompt() -> str:
-    print(f"Input username (max. {MAX_USERNAME_LEN} characters). Valid characters are: a-z, A-Z, _")
+    print(f"Input username (max. {MAX_USERNAME_LEN} characters).\n"
+          f"Valid characters are from a to Z, digits from 0-9, and the underscore _ character")
     return input("Username: ")

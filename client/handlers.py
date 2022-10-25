@@ -1,8 +1,13 @@
+import time
+
 from settings import *
+from utils import get_valid_username
 
 HEADER_SIZE = 1
 INT_SIZE = 4
 TIME_SIZE = 8
+
+RECONNECT_DUR = 5
 
 
 class InvalidUsernameException(Exception):
@@ -62,13 +67,21 @@ class ClientHandler:
         self.client.server.send(login_bfr)
 
         hdr = self.recv_header()  # server response
-
-        if hdr == SocketHeader.INVALID_USERNAME:
-            return False
-        elif hdr == SocketHeader.OK:
+        if hdr == SocketHeader.OK:
             return True
+        elif hdr == SocketHeader.INVALID_USERNAME:
+            self.client.server.close()
+            print("Login failure! Username already in use.")
+            self.client.username = get_valid_username()
+            self.client.connect_to_server()
+        elif hdr == SocketHeader.SERVER_FULL:
+            self.client.server.close()
+            print(f"Server full, reconnecting in {RECONNECT_DUR}s")
+            time.sleep(RECONNECT_DUR)
+            self.client.connect_to_server()
         else:
             raise Exception("Received unknown header during login")
+        return False
 
     def handle_send_canvas_diff(self, queue: list):
         my_bfr = bytearray([SocketHeader.CANVAS])
@@ -86,6 +99,9 @@ class ClientHandler:
         self.client.server.send(my_bfr)
 
     ###############################################################
+    def handle_unknown_header(self):
+        raise Exception("Received invalid header")
+
     def handle_empty(self):
         raise Exception("Server hung up")
 
@@ -187,5 +203,5 @@ class ClientHandler:
         status = int.from_bytes(self.recv_bytes(1), "big")
         self.client.update_players(username, bool(status))
 
-    def handle_unknown_header(self):
-        raise Exception("Received invalid header")
+    def handle_server_full(self):
+        raise Exception("Player should be already in a game")

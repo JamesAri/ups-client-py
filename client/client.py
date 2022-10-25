@@ -76,10 +76,7 @@ class Client:
         try:
             self.connect_to_server()
             while not self.handler.handle_login_attempt():
-                self.server.close()
-                print("Login failure! Username already in use.")
-                self.username = get_valid_username()
-                self.connect_to_server()
+                pass
             print("Login successful.")
         except Exception as e:
             print(f"Login error: {e}")
@@ -141,6 +138,9 @@ class Client:
 
                     case SocketHeader.PLAYER_LIST_CHANGE:
                         self.handler.handle_player_list_change()
+
+                    case SocketHeader.SERVER_FULL:
+                        self.handler.handle_server_full()
 
                     case _:
                         self.handler.handle_unknown_header()
