@@ -4,8 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pygame = "==2.1.2"
 bitarray = "==2.6.0"
+pygame = "==2.1.2"
+
+[scripts]
+client = "python main.py"
 
 [dev-packages]
 
