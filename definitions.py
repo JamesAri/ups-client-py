@@ -15,7 +15,7 @@ PORT = 9034
 
 
 class SocketHeader(IntEnum):
-    EMPTY = 0
+    DISCONNECTED = 0
     OK = 1
     CANVAS = 2
     CHAT = 3

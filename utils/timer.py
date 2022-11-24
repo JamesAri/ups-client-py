@@ -64,6 +64,7 @@ class Timer:
 
     def clear_round(self):
         with self.round_end_lock:
+            self.can_play.clear()
             self.round_end_unix = 0
             self.round_start_unix = 0
             self.sec_before_start_timer = -1

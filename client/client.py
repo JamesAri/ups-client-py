@@ -91,8 +91,8 @@ class Client:
                 header = self.handler.recv_header()
 
                 match header:
-                    case SocketHeader.EMPTY:
-                        self.handler.handle_empty()
+                    case SocketHeader.DISCONNECTED:
+                        self.handler.handle_disconnected()
 
                     case SocketHeader.GAME_IN_PROGRESS:
                         self.handler.handle_game_in_progress()

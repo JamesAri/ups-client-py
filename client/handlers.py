@@ -67,6 +67,7 @@ class ClientHandler:
         self.client.server.send(login_bfr)
 
         hdr = self.recv_header()  # server response
+
         if hdr == SocketHeader.OK:
             return True
         elif hdr == SocketHeader.INVALID_USERNAME:
@@ -79,8 +80,10 @@ class ClientHandler:
             print(f"Server full, reconnecting in {RECONNECT_DUR}s")
             time.sleep(RECONNECT_DUR)
             self.client.connect_to_server()
+        elif hdr == SocketHeader.DISCONNECTED:
+            self.handle_disconnected()
         else:
-            raise Exception("Received unknown header during login")
+            raise Exception(f"LOGIN ERROR: received unknown header during login (header: {hdr})")
         return False
 
     def handle_send_canvas_diff(self, queue: list):
@@ -102,8 +105,9 @@ class ClientHandler:
     def handle_unknown_header(self):
         raise Exception("Received invalid header")
 
-    def handle_empty(self):
-        raise Exception("Server hung up")
+    def handle_disconnected(self):
+        raise Exception(
+            "Disconnected by server (server hung up, crash dump generation in future app -> support, ticket, etc.)")
 
     def handle_ok(self):
         pass

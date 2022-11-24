@@ -2,7 +2,7 @@ from settings import MAX_USERNAME_LEN
 
 import re
 
-regexp = re.compile(r"\W")
+regexp = re.compile(r"\W\.")
 
 
 def get_valid_username() -> str:
