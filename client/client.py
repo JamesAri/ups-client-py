@@ -2,9 +2,13 @@ from settings import *
 from .handlers import ClientHandler
 from model import Chat, Canvas
 from utils import Timer, get_valid_username
+import time as time
 
 import socket
 import threading
+
+MAX_RECONNECT_DURATION = 30  # in seconds
+SLEEP_RECONNECT_DURATION = 1  # in seconds
 
 
 class Client:
@@ -33,6 +37,7 @@ class Client:
 
         self.handler = ClientHandler(self)
 
+        self.online: bool = False
         self.username = username
         self.players = dict()
         self.players_lock = threading.Lock()
@@ -49,8 +54,8 @@ class Client:
         self.run.set()
 
         if self.username == "!dev-game-only":
-            self.timer.can_play.set()
             self.update_players(self.username, False)
+            self.timer.can_play.set()
             # self.is_drawing.set()  # toggle for drawing debug
 
     def update_players(self, key, val):
@@ -67,14 +72,13 @@ class Client:
 
     def connect_to_server(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.settimeout(TIMEOUT_SEC)
+        # self.server.settimeout(TIMEOUT_SEC)
         self.server.connect((self.address, self.port))
 
     def login(self):
         if self.username == "!dev-game-only":
             return
         try:
-            self.connect_to_server()
             while not self.handler.handle_login_attempt():
                 pass
             print("Login successful.")
@@ -86,8 +90,21 @@ class Client:
         if self.username == "!dev-game-only":
             return
 
+        time_error = 0
+
         while self.run.is_set():
             try:
+                if not self.online:
+                    time.sleep(SLEEP_RECONNECT_DURATION)
+                    if int(time.time()) - time_error > MAX_RECONNECT_DURATION:
+                        print(f"Couldn't recover. Exiting.")
+                        break
+                    print(f"Attempting to reconnect")
+                    if self.handler.handle_login_attempt():
+                        print(f"You are back online!")
+                    else:
+                        continue
+
                 header = self.handler.recv_header()
 
                 match header:
@@ -148,12 +165,16 @@ class Client:
             except socket.timeout:
                 continue
             except Exception as e:
-                print(f"ERROR:\n{e}")
+                print(f"ERROR: {e}")
+                if not self.online:
+                    print(f"Couldn't recover. Exiting.")
+                    break
                 self.handler.handle_server_close()
-                break
+                time_error = int(time.time())
+                continue
 
     def ready_to_send(self) -> bool:
-        return self.username != "!dev-game-only" and self.timer.can_play.is_set()
+        return self.online and self.timer.can_play.is_set()
 
     def send_guess(self, guess: str):
         if self.is_drawing.is_set() or not self.ready_to_send():

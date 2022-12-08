@@ -32,3 +32,7 @@ class Chat:
     def clear_history(self):
         with self.chat_lock:
             self.history.clear()
+
+    def clear_input(self):
+        with self.chat_lock:
+            self.current_text = ''

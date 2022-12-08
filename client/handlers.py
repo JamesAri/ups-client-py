@@ -52,8 +52,8 @@ class ClientHandler:
     ###############################################################
 
     def handle_server_close(self):
-        self.client.update_players(self.client.username, False)
-        self.client.username = "!dev-game-only"
+        self.client.online = False
+        self.client.update_players(self.client.username, self.client.online)
         self.client.server.close()
         self.client.chat.add_to_history(("An error occurred, you are offline now", SERVER_MESSAGE_COLOR))
         self.client.chat.add_to_history(("Check console for error details", SERVER_MESSAGE_COLOR))
@@ -61,6 +61,8 @@ class ClientHandler:
     ###############################################################
 
     def handle_login_attempt(self) -> bool:
+        self.client.connect_to_server()
+
         login_bfr = bytearray([SocketHeader.LOGIN])
         login_bfr += len(self.client.username).to_bytes(INT_SIZE, "big")
         login_bfr += bytearray(self.client.username, "ascii")
@@ -69,19 +71,18 @@ class ClientHandler:
         hdr = self.recv_header()  # server response
 
         if hdr == SocketHeader.OK:
+            self.client.online = True
             return True
         elif hdr == SocketHeader.INVALID_USERNAME:
             self.client.server.close()
             print("Login failure! Username already in use.")
             self.client.username = get_valid_username()
-            self.client.connect_to_server()
         elif hdr == SocketHeader.SERVER_FULL:
             self.client.server.close()
-            print(f"Server full, reconnecting in {RECONNECT_DUR}s")
+            print(f"Server full, reconnecting in {RECONNECT_DUR} seconds")
             time.sleep(RECONNECT_DUR)
-            self.client.connect_to_server()
         elif hdr == SocketHeader.DISCONNECTED:
-            self.handle_disconnected()
+            self.handle_disconnected()  # server disconnected us, we don't know why
         else:
             raise Exception(f"LOGIN ERROR: received unknown header during login (header: {hdr})")
         return False
@@ -93,7 +94,7 @@ class ClientHandler:
             col, row = queue.pop()
             index = col * ROWS + row
             my_bfr += index.to_bytes(INT_SIZE, "big")
-        self.client.server.send(my_bfr)  # TODO make send_all
+        self.client.server.send(my_bfr)  # TODO use sendall
 
     def handle_send_guess(self, guess: str):
         my_bfr = bytearray([SocketHeader.CHAT])
@@ -130,6 +131,7 @@ class ClientHandler:
         self.client.chat.add_to_history((msg, GRAY))
 
     def handle_start_and_guess(self):
+        self.client.chat.clear_input()
         self.client.chat.add_to_history((f"Guess the drawing!", ORANGE))
 
         round_end = self.recv_time()
@@ -139,6 +141,7 @@ class ClientHandler:
         self.client.game_in_progress.set()
 
     def handle_start_and_draw(self):
+        self.client.chat.clear_input()
         self.client.chat.add_to_history((f"Draw: {self.recv_msg()}", ORANGE))
 
         round_end = self.recv_time()

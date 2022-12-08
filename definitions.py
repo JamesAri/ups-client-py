@@ -6,7 +6,7 @@ from enum import IntEnum
 
 ROWS = COLS = 100
 
-ROUND_DUR_SEC = 60
+ROUND_DUR_SEC = 20
 
 MAX_USERNAME_LEN = 14
 MAX_GUESS_LEN = 15
