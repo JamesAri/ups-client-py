@@ -143,6 +143,7 @@ class ClientHandler:
         self.client.timer.set_round_end(round_end)
         self.client.is_drawing.clear()
         self.client.game_in_progress.set()
+        self.client.canvas.clear()
 
     def handle_start_and_draw(self):
         self.client.chat.clear_input()
@@ -153,6 +154,7 @@ class ClientHandler:
         self.client.timer.set_round_end(round_end)
         self.client.is_drawing.set()
         self.client.game_in_progress.set()
+        self.client.canvas.clear()
 
     def handle_login(self):
         raise Exception("Invalid socket header, login already completed")

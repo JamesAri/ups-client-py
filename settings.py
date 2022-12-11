@@ -64,7 +64,7 @@ TIMER_HEIGHT = 15
 ROUND_DUR_MS = ROUND_DUR_SEC * 1000  # in ms
 
 # SOCKETS
-TIMEOUT_SEC = 1
+TIMEOUT_SEC = 3
 
 
 ###############################################################

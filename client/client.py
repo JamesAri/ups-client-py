@@ -72,7 +72,7 @@ class Client:
 
     def connect_to_server(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.server.settimeout(TIMEOUT_SEC)
+        self.server.settimeout(TIMEOUT_SEC)
         self.server.connect((self.address, self.port))
 
     def login(self):
