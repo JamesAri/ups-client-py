@@ -10,7 +10,8 @@ EXPECTED_ARGUMENTS = 4  # <script_path> | username hostname port
 
 def get_client() -> Client:
     if len(sys.argv) != EXPECTED_ARGUMENTS:
-        raise Exception("usage: <executable> username hostname port")
+        print("usage: <executable> username hostname port", file=sys.stderr)
+        exit(1)
 
     username = sys.argv[1]
     host = sys.argv[2]
@@ -18,7 +19,7 @@ def get_client() -> Client:
     try:
         port = int(sys.argv[3])
     except ValueError:
-        print("Invalid port number")
+        print("Invalid port number", file=sys.stderr)
         exit(1)
 
     if not validate_username(username):
