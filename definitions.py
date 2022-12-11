@@ -31,3 +31,4 @@ class SocketHeader(IntEnum):
     PLAYER_LIST = 15
     PLAYER_LIST_CHANGE = 16
     SERVER_FULL = 17
+    HEARTBEAT = 18

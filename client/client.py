@@ -8,7 +8,7 @@ import socket
 import threading
 
 MAX_RECONNECT_DURATION = 30  # in seconds
-SLEEP_RECONNECT_DURATION = 1  # in seconds
+SLEEP_RECONNECT_DURATION = 2  # in seconds
 
 
 class Client:
@@ -159,15 +159,15 @@ class Client:
                     case SocketHeader.SERVER_FULL:
                         self.handler.handle_server_full()
 
+                    case SocketHeader.HEARTBEAT:
+                        self.handler.handle_heartbeat()
+
                     case _:
                         self.handler.handle_unknown_header()
 
             except socket.timeout:
                 continue
             except Exception as e:
-                # if not self.online:
-                #     print(f"Couldn't recover. Exiting.")
-                #     break
                 if self.online:
                     time_error = int(time.time())
                     self.handler.handle_server_close()

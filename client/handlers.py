@@ -212,3 +212,6 @@ class ClientHandler:
 
     def handle_server_full(self):
         raise Exception("Player should be already in a game")
+
+    def handle_heartbeat(self):
+        print("♥")
