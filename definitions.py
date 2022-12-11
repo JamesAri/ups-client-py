@@ -11,8 +11,6 @@ ROUND_DUR_SEC = 20
 MAX_USERNAME_LEN = 14
 MAX_GUESS_LEN = 15
 
-PORT = 9034
-
 
 class SocketHeader(IntEnum):
     DISCONNECTED = 0

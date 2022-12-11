@@ -1,4 +1,3 @@
-from settings import PORT
 from game import start_game
 from client import Client
 from utils import get_valid_username, validate_username
@@ -6,17 +5,26 @@ from utils import get_valid_username, validate_username
 import sys
 import threading
 
-EXPECTED_ARGUMENTS = 2  # <script_path> | username
+EXPECTED_ARGUMENTS = 4  # <script_path> | username hostname port
 
 
 def get_client() -> Client:
     if len(sys.argv) != EXPECTED_ARGUMENTS:
-        raise Exception("invalid arguments")
-    else:
-        username = sys.argv[1]
-        if not validate_username(username):
-            username = get_valid_username()
-        return Client(username, '127.0.0.1', PORT)
+        raise Exception("usage: <executable> username hostname port")
+
+    username = sys.argv[1]
+    host = sys.argv[2]
+    port = 0
+    try:
+        port = int(sys.argv[3])
+    except ValueError:
+        print("Invalid port number")
+        exit(1)
+
+    if not validate_username(username):
+        username = get_valid_username()
+        
+    return Client(username, host, port)
 
 
 if __name__ == "__main__":

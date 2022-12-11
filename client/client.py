@@ -165,12 +165,13 @@ class Client:
             except socket.timeout:
                 continue
             except Exception as e:
+                # if not self.online:
+                #     print(f"Couldn't recover. Exiting.")
+                #     break
+                if self.online:
+                    time_error = int(time.time())
                 print(f"ERROR: {e}")
-                if not self.online:
-                    print(f"Couldn't recover. Exiting.")
-                    break
                 self.handler.handle_server_close()
-                time_error = int(time.time())
                 continue
 
     def ready_to_send(self) -> bool:
