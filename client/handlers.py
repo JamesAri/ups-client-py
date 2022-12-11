@@ -102,6 +102,10 @@ class ClientHandler:
         my_bfr += bytearray(guess, "ascii")
         self.client.server.send(my_bfr)
 
+    def handle_send_heartbeat(self):
+        my_bfr = bytearray([SocketHeader.HEARTBEAT])
+        self.client.server.send(my_bfr)
+
     ###############################################################
     def handle_unknown_header(self):
         raise Exception("Received invalid header")
@@ -215,3 +219,4 @@ class ClientHandler:
 
     def handle_heartbeat(self):
         print("♥")
+        self.handle_send_heartbeat()
