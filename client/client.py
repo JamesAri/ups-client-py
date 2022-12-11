@@ -170,8 +170,8 @@ class Client:
                 #     break
                 if self.online:
                     time_error = int(time.time())
+                    self.handler.handle_server_close()
                 print(f"ERROR: {e}")
-                self.handler.handle_server_close()
                 continue
 
     def ready_to_send(self) -> bool:
